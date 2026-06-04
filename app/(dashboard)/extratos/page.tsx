@@ -10,6 +10,7 @@ import api from '@/lib/api'
 import { formatCurrency, formatDate, monthName } from '@/lib/utils'
 import { useMesSelecionado } from '@/hooks/useMesSelecionado'
 import { MonthNav } from '@/components/MonthNav'
+import { useToast } from '@/components/Toast'
 import type { Extrato, Categoria, ExtratoImportResult, PageResponse, ContaBancaria } from '@/types'
 
 const ACCEPTED = '.csv,.xlsx,.xls'
@@ -477,6 +478,7 @@ function FileIcon({ file }: { file: File }) {
 
 export default function ExtratosPage() {
   const qc = useQueryClient()
+  const toast = useToast()
   const nav = useMesSelecionado()
   const { mes, ano } = nav
   const [importMsg, setImportMsg] = useState<ExtratoImportResult | null>(null)
@@ -490,6 +492,9 @@ export default function ExtratosPage() {
   const [filtroConta, setFiltroConta] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [importContaBancariaId, setImportContaBancariaId] = useState('')
+  const [showNewConta, setShowNewConta] = useState(false)
+  const [newContaForm, setNewContaForm] = useState({ nome: '', banco: '', tipo: 'CORRENTE' })
+  const [savingConta, setSavingConta] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkCategoria, setBulkCategoria] = useState('')
   const [bulkConta, setBulkConta] = useState('')
@@ -551,12 +556,31 @@ export default function ExtratosPage() {
       const msg = err.response?.data?.message ?? 'Erro ao importar arquivo.'
       setShowImport(false)
       setImportMsg({ importados: 0, duplicatasIgnoradas: 0, erros: 1, batchId: null, mensagem: msg })
+      toast(msg)
     },
   })
+
+  async function criarContaInline() {
+    if (!newContaForm.nome.trim() || !newContaForm.banco.trim()) return
+    setSavingConta(true)
+    try {
+      const { data } = await api.post<ContaBancaria>('/contas-bancarias', newContaForm)
+      await qc.invalidateQueries({ queryKey: ['contas-bancarias'] })
+      setImportContaBancariaId(data.id)
+      setShowNewConta(false)
+      setNewContaForm({ nome: '', banco: '', tipo: 'CORRENTE' })
+      toast('Conta criada e selecionada', 'success')
+    } catch {
+      toast('Erro ao criar conta bancária')
+    } finally {
+      setSavingConta(false)
+    }
+  }
 
   const { mutate: atribuirCategoria } = useMutation({
     mutationFn: ({ id, categoriaId }: { id: string; categoriaId: string }) =>
       api.patch(`/extratos/${id}/categoria`, { categoriaId }),
+    onError: () => toast('Erro ao atualizar categoria'),
     onSuccess: (_, { id, categoriaId }) => {
       let eraSemCategoria = false
       for (const [, data] of qc.getQueriesData<PageResponse<Extrato>>({ queryKey: ['extratos'] })) {
@@ -588,6 +612,7 @@ export default function ExtratosPage() {
   const { mutate: atribuirConta } = useMutation({
     mutationFn: ({ id, contaBancariaId }: { id: string; contaBancariaId: string }) =>
       api.patch(`/extratos/${id}/conta-bancaria`, { contaBancariaId: contaBancariaId || null }),
+    onError: () => toast('Erro ao atualizar conta'),
     onSuccess: (_, { id, contaBancariaId }) => {
       qc.setQueriesData<PageResponse<Extrato>>(
         { queryKey: ['extratos'], exact: false },
@@ -603,6 +628,7 @@ export default function ExtratosPage() {
       qc.invalidateQueries({ queryKey: ['extratos'] })
       qc.invalidateQueries({ queryKey: ['sem-categoria'] })
     },
+    onError: () => toast('Erro ao excluir lançamento'),
   })
 
   const onDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(true) }, [])
@@ -995,7 +1021,7 @@ export default function ExtratosPage() {
           <div className="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-sm shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">Importar Extrato</h3>
-              <button onClick={() => { setShowImport(false); setSelectedFile(null) }}>
+              <button onClick={() => { setShowImport(false); setSelectedFile(null); setShowNewConta(false) }}>
                 <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
               </button>
             </div>
@@ -1035,9 +1061,52 @@ export default function ExtratosPage() {
               />
             </div>
 
-            {contas.length > 0 && (
-              <div className="mt-3">
-                <label className="block text-xs text-gray-500 mb-1">Associar à conta bancária</label>
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs text-gray-500">Associar à conta bancária</label>
+                <button
+                  type="button"
+                  onClick={() => setShowNewConta(v => !v)}
+                  className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                >
+                  {showNewConta ? 'Cancelar' : '＋ Nova conta'}
+                </button>
+              </div>
+
+              {showNewConta ? (
+                <div className="space-y-2 p-3 border border-blue-200 rounded-lg bg-blue-50">
+                  <input
+                    value={newContaForm.nome}
+                    onChange={e => setNewContaForm(f => ({ ...f, nome: e.target.value }))}
+                    placeholder="Nome da conta (ex: Conta Principal)"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400"
+                  />
+                  <input
+                    value={newContaForm.banco}
+                    onChange={e => setNewContaForm(f => ({ ...f, banco: e.target.value }))}
+                    placeholder="Banco (ex: Itaú, Nubank)"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400"
+                  />
+                  <select
+                    value={newContaForm.tipo}
+                    onChange={e => setNewContaForm(f => ({ ...f, tipo: e.target.value }))}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400"
+                  >
+                    <option value="CORRENTE">Corrente</option>
+                    <option value="POUPANCA">Poupança</option>
+                    <option value="INVESTIMENTO">Investimento</option>
+                    <option value="OUTRO">Outro</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={criarContaInline}
+                    disabled={savingConta || !newContaForm.nome.trim() || !newContaForm.banco.trim()}
+                    className="w-full py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm rounded-lg transition-colors"
+                  >
+                    {savingConta ? 'Criando...' : 'Criar e selecionar'}
+                  </button>
+                </div>
+              ) : (
                 <select
                   value={importContaBancariaId}
                   onChange={e => setImportContaBancariaId(e.target.value)}
@@ -1048,8 +1117,8 @@ export default function ExtratosPage() {
                     <option key={c.id} value={c.id}>{c.nome} — {c.banco}</option>
                   ))}
                 </select>
-              </div>
-            )}
+              )}
+            </div>
 
             <p className="text-xs text-gray-400 mt-3 leading-relaxed">
               Suporta exportações de qualquer banco. Colunas detectadas automaticamente.
@@ -1058,7 +1127,7 @@ export default function ExtratosPage() {
 
             <div className="flex gap-3 mt-5">
               <button
-                onClick={() => { setShowImport(false); setSelectedFile(null) }}
+                onClick={() => { setShowImport(false); setSelectedFile(null); setShowNewConta(false) }}
                 className="flex-1 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50"
               >
                 Cancelar
