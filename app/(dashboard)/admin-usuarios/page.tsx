@@ -48,7 +48,7 @@ function EmpresaRow({ empresa }: { empresa: AdminEnterprise }) {
       setShowForm(false)
       setFormError('')
     },
-    onError: (e: any) => setFormError(e?.response?.data?.message ?? 'Erro ao cadastrar usuário'),
+    onError: (e: unknown) => setFormError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao cadastrar usuário'),
   })
 
   function submitForm() {

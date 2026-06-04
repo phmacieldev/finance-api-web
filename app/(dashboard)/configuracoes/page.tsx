@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { CheckCircle, AlertCircle, User, Building2, Lock, ChevronRight } from 'lucide-react'
+import { CheckCircle, AlertCircle, User, Building2, Lock } from 'lucide-react'
 import api from '@/lib/api'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -133,7 +133,7 @@ function DadosPessoais({ perfil, onSuccess, onError }: {
       qc.invalidateQueries({ queryKey: ['perfil'] })
       onSuccess('Dados atualizados com sucesso')
     },
-    onError: (e: any) => onError(e.response?.data?.message ?? 'Erro ao atualizar dados'),
+    onError: (e: unknown) => onError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao atualizar dados'),
   })
 
   return (
@@ -180,7 +180,7 @@ function AlterarSenha({ onSuccess, onError }: {
       reset()
       onSuccess('Senha alterada com sucesso')
     },
-    onError: (e: any) => onError(e.response?.data?.message ?? 'Erro ao alterar senha'),
+    onError: (e: unknown) => onError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao alterar senha'),
   })
 
   return (
@@ -231,7 +231,7 @@ function DadosEmpresa({ perfil, onSuccess, onError }: {
       qc.invalidateQueries({ queryKey: ['perfil'] })
       onSuccess('Dados da empresa atualizados')
     },
-    onError: (e: any) => onError(e.response?.data?.message ?? 'Erro ao atualizar empresa'),
+    onError: (e: unknown) => onError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao atualizar empresa'),
   })
 
   return (

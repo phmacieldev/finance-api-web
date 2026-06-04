@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import api from '@/lib/api'
 import type { TokenResponseDTO } from '@/types'
+import type { UseFormRegister, FieldErrors } from 'react-hook-form'
 
 const schema = z.object({
   userName: z.string().min(2, 'Nome obrigatório'),
@@ -18,6 +19,24 @@ const schema = z.object({
   cnpj: z.string().min(14, 'CNPJ inválido'),
 })
 type Form = z.infer<typeof schema>
+
+function Field({ label, name, type = 'text', placeholder, register, errors }: {
+  label: string; name: keyof Form; type?: string; placeholder: string
+  register: UseFormRegister<Form>; errors: FieldErrors<Form>
+}) {
+  return (
+    <div>
+      <label className="block text-sm text-slate-300 mb-1">{label}</label>
+      <input
+        {...register(name)}
+        type={type}
+        placeholder={placeholder}
+        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500"
+      />
+      {errors[name] && <p className="text-red-400 text-xs mt-1">{errors[name]?.message}</p>}
+    </div>
+  )
+}
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -34,23 +53,11 @@ export default function RegisterPage() {
       // Registration requires email verification — redirect to pending page
       router.push(`/verificar-pendente?email=${encodeURIComponent(variables.email)}`)
     },
-    onError: (err: any) => {
-      setError(err.response?.data?.message || 'Erro ao cadastrar. Tente novamente.')
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setError(msg || 'Erro ao cadastrar. Tente novamente.')
     },
   })
-
-  const Field = ({ label, name, type = 'text', placeholder }: { label: string; name: keyof Form; type?: string; placeholder: string }) => (
-    <div>
-      <label className="block text-sm text-slate-300 mb-1">{label}</label>
-      <input
-        {...register(name)}
-        type={type}
-        placeholder={placeholder}
-        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500"
-      />
-      {errors[name] && <p className="text-red-400 text-xs mt-1">{errors[name]?.message}</p>}
-    </div>
-  )
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 py-8">
@@ -64,11 +71,11 @@ export default function RegisterPage() {
           <h2 className="text-lg font-semibold text-white mb-6">Criar conta</h2>
 
           <form onSubmit={handleSubmit((data) => { setError(''); mutate(data) })} className="space-y-4">
-            <Field label="Seu nome" name="userName" placeholder="João Silva" />
-            <Field label="E-mail" name="email" type="email" placeholder="seu@email.com" />
-            <Field label="Senha" name="password" type="password" placeholder="Mínimo 8 caracteres" />
-            <Field label="Nome da empresa" name="enterpriseName" placeholder="Minha Empresa Ltda." />
-            <Field label="CNPJ" name="cnpj" placeholder="00.000.000/0001-00" />
+            <Field label="Seu nome" name="userName" placeholder="João Silva" register={register} errors={errors} />
+            <Field label="E-mail" name="email" type="email" placeholder="seu@email.com" register={register} errors={errors} />
+            <Field label="Senha" name="password" type="password" placeholder="Mínimo 8 caracteres" register={register} errors={errors} />
+            <Field label="Nome da empresa" name="enterpriseName" placeholder="Minha Empresa Ltda." register={register} errors={errors} />
+            <Field label="CNPJ" name="cnpj" placeholder="00.000.000/0001-00" register={register} errors={errors} />
 
             {error && (
               <div className="bg-red-900/40 border border-red-700 rounded-lg px-3 py-2 text-red-400 text-sm">

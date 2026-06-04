@@ -14,6 +14,7 @@ function VerificarEmailContent() {
   const [msg, setMsg] = useState('')
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!token) { setStatus('error'); setMsg('Token inválido ou ausente.'); return }
 
     api.get(`/auth/verificar-email?token=${token}`)

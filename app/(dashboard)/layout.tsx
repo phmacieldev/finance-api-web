@@ -143,7 +143,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               Confirme seu e-mail para garantir acesso contínuo à conta.
             </span>
             <button
-              onClick={() => api.post(`/auth/reenviar-verificacao?email=${me && (me as any).email}`).catch(() => {})}
+              onClick={() => api.post(`/auth/reenviar-verificacao?email=${(me as { email?: string })?.email ?? ''}`).catch(() => {})}
               className="text-amber-700 dark:text-amber-400 underline hover:no-underline ml-4"
             >
               Reenviar link

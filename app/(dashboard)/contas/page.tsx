@@ -41,6 +41,7 @@ function BancoCombobox({ value, onChange, tipo }: { value: string; onChange: (v:
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setQuery(value) }, [value])
 
   return (

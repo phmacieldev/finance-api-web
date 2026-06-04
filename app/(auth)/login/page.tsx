@@ -37,8 +37,8 @@ export default function LoginPage() {
       clearMesSelecionado()
       router.push(data.role === 'PLATFORM_ADMIN' ? '/painel-admin' : '/dashboard')
     },
-    onError: (err: any) => {
-      const msg: string = err.response?.data?.message ?? ''
+    onError: (err: unknown) => {
+      const msg: string = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? ''
       if (msg.includes('verificado')) {
         setError('E-mail não verificado. Verifique sua caixa de entrada.')
       } else if (msg.includes('aprovação')) {

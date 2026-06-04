@@ -38,7 +38,7 @@ export default function ExportPage() {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
       setDone(format)
-    } catch (e) {
+    } catch {
       alert('Erro ao baixar arquivo. Verifique se há dados para o período.')
     } finally {
       setDownloading(null)
