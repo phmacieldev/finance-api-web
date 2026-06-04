@@ -41,7 +41,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { theme, toggleTheme } = useTheme()
   const { mes, ano } = useMesSelecionado()
 
-  const { data: me } = useQuery<{ role: string; emailVerificado?: boolean }>({
+  const { data: me, isLoading: meLoading } = useQuery<{ role: string; emailVerificado?: boolean }>({
     queryKey: ['me'],
     queryFn: () => api.get('/me').then(r => r.data),
     staleTime: 300_000,
@@ -77,7 +77,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {(isPlatformAdmin ? navItemsAdmin : navItemsApp).filter(({ href }) => {
+          {meLoading ? (
+            <div className="space-y-1">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-10 rounded-lg bg-slate-800 animate-pulse" />
+              ))}
+            </div>
+          ) : (isPlatformAdmin ? navItemsAdmin : navItemsApp).filter(({ href }) => {
             if (isUser) return ['/dashboard', '/dre', '/relatorio', '/configuracoes'].includes(href)
             return true
           }).map(({ href, label, icon: Icon }) => {
