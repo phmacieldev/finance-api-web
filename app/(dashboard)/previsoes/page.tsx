@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, X, Trash2, TrendingUp, TrendingDown } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import api from '@/lib/api'
@@ -49,12 +49,12 @@ export default function PrevisoesPage() {
     queryFn: () => api.get<Categoria[]>('/categorias').then((r) => r.data),
   })
 
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<Form>({
+  const { register, handleSubmit, reset, control, formState: { errors } } = useForm<Form>({
     resolver: zodResolver(schema),
     defaultValues: { tipo: 'DESPESA', frequencia: 'MENSAL', dataInicio: new Date().toISOString().slice(0, 10) },
   })
 
-  const frequencia = watch('frequencia')
+  const frequencia = useWatch({ control, name: 'frequencia' })
 
   const { mutate: criar, isPending } = useMutation({
     mutationFn: (data: Form) => api.post('/previsoes', {

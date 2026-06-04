@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Upload, X, CheckCircle, FileText, FileSpreadsheet, Pencil,
+  Upload, X, FileText, FileSpreadsheet, Pencil,
   AlertTriangle, XCircle, CheckCircle2, Trash2, Filter
 } from 'lucide-react'
 import api from '@/lib/api'
@@ -301,7 +301,9 @@ function CategoriaCell({
     ? categorias.filter((c) => c.tipo === tipoEsperado)
     : categorias
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setValue(extrato.categoriaId ?? '') }, [extrato.categoriaId])
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (editing) { setAviso(''); selectRef.current?.focus() } }, [editing])
 
   function save() {
@@ -402,6 +404,7 @@ function ContaCell({
   const [value, setValue] = useState(extrato.contaBancariaId ?? '')
   const selectRef = useRef<HTMLSelectElement>(null)
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setValue(extrato.contaBancariaId ?? '') }, [extrato.contaBancariaId])
   useEffect(() => { if (editing) selectRef.current?.focus() }, [editing])
 
@@ -501,6 +504,7 @@ export default function ExtratosPage() {
   const [applyingBulk, setApplyingBulk] = useState(false)
 
   // Reset page and selection when filters/month change
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setPage(0); setSelectedIds(new Set()) }, [mes, ano, filtroCategoria, filtroTipo, filtroConta])
 
   const params = new URLSearchParams({ mes: String(mes), ano: String(ano), page: String(page), size: '50' })
@@ -552,8 +556,8 @@ export default function ExtratosPage() {
       qc.invalidateQueries({ queryKey: ['extratos'] })
       setImportMsg(result)
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.message ?? 'Erro ao importar arquivo.'
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao importar arquivo.'
       setShowImport(false)
       setImportMsg({ importados: 0, duplicatasIgnoradas: 0, erros: 1, batchId: null, mensagem: msg })
       toast(msg)
@@ -598,10 +602,9 @@ export default function ExtratosPage() {
           ['sem-categoria', mes, ano],
           (old) => old ? old.filter((e) => e.id !== id) : old
         )
-        qc.setQueriesData<any>(
+        qc.setQueriesData<{ transacoesSemCategoria?: number }>(
           { queryKey: ['dashboard'], exact: false },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (old: any) => old
+          (old) => old
             ? { ...old, transacoesSemCategoria: Math.max(0, (old.transacoesSemCategoria ?? 0) - 1) }
             : old
         )
@@ -631,6 +634,11 @@ export default function ExtratosPage() {
     onError: () => toast('Erro ao excluir lançamento'),
   })
 
+  function isValidFile(f: File) {
+    const n = f.name.toLowerCase()
+    return n.endsWith('.csv') || n.endsWith('.xlsx') || n.endsWith('.xls')
+  }
+
   const onDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(true) }, [])
   const onDragLeave = useCallback(() => setDragging(false), [])
   const onDrop = useCallback((e: React.DragEvent) => {
@@ -639,11 +647,6 @@ export default function ExtratosPage() {
     const file = e.dataTransfer.files?.[0]
     if (file && isValidFile(file)) setSelectedFile(file)
   }, [])
-
-  function isValidFile(f: File) {
-    const n = f.name.toLowerCase()
-    return n.endsWith('.csv') || n.endsWith('.xlsx') || n.endsWith('.xls')
-  }
 
   const allPageIds = extratos.map(e => e.id)
   const allSelected = allPageIds.length > 0 && allPageIds.every(id => selectedIds.has(id))

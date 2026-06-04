@@ -106,7 +106,7 @@ export default function PainelAdminPage() {
       setShowAddUser(false)
       setAddUserError('')
     },
-    onError: (e: any) => setAddUserError(e?.response?.data?.message ?? 'Erro ao cadastrar'),
+    onError: (e: unknown) => setAddUserError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao cadastrar'),
   })
 
   const pendentes = empresas.filter(e => e.status === 'PENDENTE').length

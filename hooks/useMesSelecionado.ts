@@ -31,6 +31,7 @@ export function useMesSelecionado(): MesSelecionado {
       const stored = sessionStorage.getItem(STORAGE_KEY)
       if (stored) {
         const { mes: m, ano: a } = JSON.parse(stored)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (m && a) { setMesState(m); setAnoState(a) }
       }
     } catch {}
@@ -43,11 +44,13 @@ export function useMesSelecionado(): MesSelecionado {
   }
 
   function prevMes() {
-    mes === 1 ? set(12, ano - 1) : set(mes - 1, ano)
+    if (mes === 1) set(12, ano - 1)
+    else set(mes - 1, ano)
   }
 
   function nextMes() {
-    mes === 12 ? set(1, ano + 1) : set(mes + 1, ano)
+    if (mes === 12) set(1, ano + 1)
+    else set(mes + 1, ano)
   }
 
   function irParaMesAtual() {
