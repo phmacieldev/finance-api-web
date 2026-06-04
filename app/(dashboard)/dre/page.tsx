@@ -22,7 +22,7 @@ export default function DrePage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">DRE</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Demonstrativo de Resultados do Exercício</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Demonstrativo de Resultados do Exercício</p>
         </div>
         <MonthNav nav={nav} />
       </div>
@@ -65,27 +65,27 @@ export default function DrePage() {
                   key={i}
                   className={`flex items-center justify-between px-6 py-3 ${
                     isLucroLiquido
-                      ? 'bg-blue-700 dark:bg-blue-800 font-semibold'
+                      ? 'bg-blue-600 dark:bg-blue-700 font-semibold'
                       : linha.ehSubtotal
-                      ? 'bg-slate-100 dark:bg-slate-700 font-semibold'
-                      : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'
+                      ? 'bg-slate-100 dark:bg-slate-700/80 font-semibold'
+                      : 'hover:bg-gray-50 dark:hover:bg-slate-700/30'
                   }`}
                 >
                   <span className={`text-sm ${
                     isLucroLiquido
                       ? 'text-white font-bold'
                       : linha.ehSubtotal
-                      ? 'text-gray-800 dark:text-gray-100'
-                      : 'text-gray-600 dark:text-gray-300'
+                      ? 'text-gray-800 dark:text-white'
+                      : 'text-gray-700 dark:text-gray-200'
                   }`}>
                     {linha.label}
                   </span>
                   <span className={`text-sm font-medium tabular-nums ${
                     isLucroLiquido
-                      ? isPositive ? 'text-green-300' : 'text-red-300'
+                      ? isPositive ? 'text-green-200' : 'text-red-200'
                       : linha.ehSubtotal
-                      ? isPositive ? 'text-gray-800 dark:text-gray-100' : 'text-red-600 dark:text-red-400'
-                      : isPositive ? 'text-gray-700 dark:text-gray-300' : 'text-red-500 dark:text-red-400'
+                      ? isPositive ? 'text-gray-800 dark:text-white' : 'text-red-600 dark:text-red-300'
+                      : isPositive ? 'text-gray-800 dark:text-gray-100' : 'text-red-600 dark:text-red-300'
                   }`}>
                     {formatCurrency(linha.valor)}
                   </span>
@@ -97,12 +97,12 @@ export default function DrePage() {
           {/* Resultado final destacado */}
           <div className={`px-6 py-4 mt-0 border-t-2 ${
             data.lucroLiquido >= 0
-              ? 'border-green-400 bg-green-50 dark:bg-green-950/30'
-              : 'border-red-400 bg-red-50 dark:bg-red-950/30'
+              ? 'border-green-500 bg-green-50 dark:bg-green-900/25'
+              : 'border-red-500 bg-red-50 dark:bg-red-900/25'
           }`}>
             <div className="flex items-center justify-between">
-              <span className="font-bold text-gray-900 dark:text-gray-100">Resultado do Período</span>
-              <span className={`text-xl font-bold ${data.lucroLiquido >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              <span className="font-bold text-gray-900 dark:text-white">Resultado do Período</span>
+              <span className={`text-xl font-bold ${data.lucroLiquido >= 0 ? 'text-green-600 dark:text-green-300' : 'text-red-600 dark:text-red-300'}`}>
                 {formatCurrency(data.lucroLiquido)}
               </span>
             </div>
