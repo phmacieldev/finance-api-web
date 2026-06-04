@@ -1,8 +1,10 @@
 export interface TokenResponseDTO {
-  token: string
-  type: string
+  token: string | null
+  type: string | null
+  refreshToken: string | null
   email: string
   role: string
+  emailPendente: boolean
 }
 
 export interface Categoria {
