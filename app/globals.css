@@ -1,26 +1,65 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+* { box-sizing: border-box; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #f9fafb;
+  color: #111827;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  transition: background-color 0.15s, color 0.15s;
 }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ─── Dark mode via variáveis CSS do Tailwind v4 ─────────────────────────── */
+
+html.dark {
+  color-scheme: dark;
+
+  /*
+   * Sobrescreve os tokens de cor cinza do Tailwind v4.
+   * Inverte a escala: bg-gray-50 (claro) → slate escuro; text-gray-900 → quase branco.
+   * NÃO sobrescrevemos --color-white pois text-white seria quebrado (botões, badges).
+   */
+  --color-gray-50:  #0f172a;
+  --color-gray-100: #1e293b;
+  --color-gray-200: #334155;
+  --color-gray-300: #475569;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #94a3b8;
+  --color-gray-600: #cbd5e1;
+  --color-gray-700: #e2e8f0;
+  --color-gray-800: #f1f5f9;
+  --color-gray-900: #f8fafc;
+  --color-gray-950: #ffffff;
+}
+
+/* bg-white precisa de tratamento separado para não afetar text-white */
+html.dark .bg-white { background-color: #1e293b; }
+html.dark .hover\:bg-white:hover { background-color: #1e293b; }
+
+html.dark body {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+html.dark ::-webkit-scrollbar-track { background: #1e293b; }
+html.dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+/* Inputs & selects */
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #1e293b;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder { color: #64748b; }
+html.dark select option { background-color: #1e293b; color: #f1f5f9; }

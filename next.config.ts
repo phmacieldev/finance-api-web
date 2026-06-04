@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Permite que o Vercel otimize o output
+  output: "standalone",
 };
 
 export default nextConfig;
