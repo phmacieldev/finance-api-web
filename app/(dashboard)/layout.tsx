@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { removeToken } from '@/lib/auth'
+import { removeToken, getRefreshToken } from '@/lib/auth'
 import { clearMesSelecionado, useMesSelecionado } from '@/hooks/useMesSelecionado'
 import { useTheme } from '@/components/theme'
 import { cn } from '@/lib/utils'
@@ -58,7 +58,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   })
   const semCatCount = semCatList.length
 
-  function logout() {
+  async function logout() {
+    const refreshToken = getRefreshToken()
+    if (refreshToken) {
+      try { await api.post('/auth/logout', { refreshToken }) } catch { /* ignora erro de rede */ }
+    }
     removeToken()
     clearMesSelecionado()
     queryClient.clear()
