@@ -9,6 +9,9 @@ import { z } from 'zod'
 import api from '@/lib/api'
 import type { Categoria } from '@/types'
 import { DRE_CATEGORIAS } from '@/types'
+import { useToast } from '@/components/Toast'
+
+const PAGE_SIZE = 12
 
 const schema = z.object({
   name: z.string().min(2, 'Nome obrigatório'),
@@ -31,8 +34,10 @@ const DRE_LABELS: Record<string, string> = {
 
 export default function CategoriasPage() {
   const qc = useQueryClient()
+  const toast = useToast()
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState<'ALL' | 'RECEITA' | 'DESPESA'>('ALL')
+  const [page, setPage] = useState(0)
 
   const { data: categorias = [], isLoading } = useQuery({
     queryKey: ['categorias'],
@@ -46,15 +51,32 @@ export default function CategoriasPage() {
 
   const { mutate: criar, isPending } = useMutation({
     mutationFn: (data: Form) => api.post('/categorias', data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['categorias'] }); reset(); setOpen(false) },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['categorias'] })
+      reset()
+      setOpen(false)
+      toast('Categoria criada com sucesso', 'success')
+    },
+    onError: () => toast('Erro ao criar categoria'),
   })
 
   const { mutate: deletar } = useMutation({
     mutationFn: (id: string) => api.delete(`/categorias/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['categorias'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['categorias'] })
+      toast('Categoria removida', 'success')
+    },
+    onError: () => toast('Não foi possível remover — categoria pode estar em uso'),
   })
 
   const filtradas = categorias.filter((c) => filter === 'ALL' || c.tipo === filter)
+  const totalPages = Math.ceil(filtradas.length / PAGE_SIZE)
+  const paginadas = filtradas.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+
+  function setFilter2(f: 'ALL' | 'RECEITA' | 'DESPESA') {
+    setFilter(f)
+    setPage(0)
+  }
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -76,7 +98,7 @@ export default function CategoriasPage() {
         {(['ALL', 'RECEITA', 'DESPESA'] as const).map((f) => (
           <button
             key={f}
-            onClick={() => setFilter(f)}
+            onClick={() => setFilter2(f)}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               filter === f ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
@@ -84,45 +106,70 @@ export default function CategoriasPage() {
             {f === 'ALL' ? 'Todas' : f === 'RECEITA' ? 'Receita' : 'Despesa'}
           </button>
         ))}
+        {filtradas.length > 0 && (
+          <span className="ml-auto text-xs text-gray-400 self-center">{filtradas.length} categorias</span>
+        )}
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-16">
           <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : filtradas.length === 0 ? (
+      ) : paginadas.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <p className="font-medium">Nenhuma categoria</p>
           <p className="text-sm mt-1">Crie sua primeira categoria acima</p>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filtradas.map((c) => (
-            <div key={c.id} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 flex items-start justify-between group">
-              <div className="min-w-0">
-                <p className="font-medium text-gray-900 truncate">{c.name}</p>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    c.tipo === 'RECEITA'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-red-100 text-red-700'
-                  }`}>
-                    {c.tipo === 'RECEITA' ? 'Receita' : 'Despesa'}
-                  </span>
-                  {c.dreCategoria && (
-                    <span className="text-xs text-slate-500">{DRE_LABELS[c.dreCategoria] ?? c.dreCategoria}</span>
-                  )}
+        <>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {paginadas.map((c) => (
+              <div key={c.id} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 flex items-start justify-between group">
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-900 truncate">{c.name}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      c.tipo === 'RECEITA' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {c.tipo === 'RECEITA' ? 'Receita' : 'Despesa'}
+                    </span>
+                    {c.dreCategoria && (
+                      <span className="text-xs text-slate-500">{DRE_LABELS[c.dreCategoria] ?? c.dreCategoria}</span>
+                    )}
+                  </div>
                 </div>
+                <button
+                  onClick={() => deletar(c.id)}
+                  className="p-1.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
-              <button
-                onClick={() => deletar(c.id)}
-                className="p-1.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+              <span className="text-sm text-gray-500">Página {page + 1} de {totalPages}</span>
+              <div className="flex gap-2">
+                <button
+                  disabled={page === 0}
+                  onClick={() => setPage(p => p - 1)}
+                  className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                >
+                  Anterior
+                </button>
+                <button
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage(p => p + 1)}
+                  className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                >
+                  Próxima
+                </button>
+              </div>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {/* Modal */}
