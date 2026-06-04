@@ -490,9 +490,13 @@ export default function ExtratosPage() {
   const [filtroConta, setFiltroConta] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [importContaBancariaId, setImportContaBancariaId] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkCategoria, setBulkCategoria] = useState('')
+  const [bulkConta, setBulkConta] = useState('')
+  const [applyingBulk, setApplyingBulk] = useState(false)
 
-  // Reset page when filters/month change
-  useEffect(() => { setPage(0) }, [mes, ano, filtroCategoria, filtroTipo, filtroConta])
+  // Reset page and selection when filters/month change
+  useEffect(() => { setPage(0); setSelectedIds(new Set()) }, [mes, ano, filtroCategoria, filtroTipo, filtroConta])
 
   const params = new URLSearchParams({ mes: String(mes), ano: String(ano), page: String(page), size: '50' })
   if (filtroCategoria) params.set('categoriaId', filtroCategoria)
@@ -615,6 +619,58 @@ export default function ExtratosPage() {
     return n.endsWith('.csv') || n.endsWith('.xlsx') || n.endsWith('.xls')
   }
 
+  const allPageIds = extratos.map(e => e.id)
+  const allSelected = allPageIds.length > 0 && allPageIds.every(id => selectedIds.has(id))
+
+  function toggleSelectAll() {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (allSelected) allPageIds.forEach(id => next.delete(id))
+      else allPageIds.forEach(id => next.add(id))
+      return next
+    })
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  async function applyBulkCategoria() {
+    if (!bulkCategoria || selectedIds.size === 0) return
+    setApplyingBulk(true)
+    try {
+      await Promise.all([...selectedIds].map(id =>
+        api.patch(`/extratos/${id}/categoria`, { categoriaId: bulkCategoria })
+      ))
+      qc.invalidateQueries({ queryKey: ['extratos'] })
+      qc.invalidateQueries({ queryKey: ['sem-categoria'] })
+      setSelectedIds(new Set())
+      setBulkCategoria('')
+    } finally {
+      setApplyingBulk(false)
+    }
+  }
+
+  async function applyBulkConta() {
+    if (!bulkConta || selectedIds.size === 0) return
+    setApplyingBulk(true)
+    try {
+      await Promise.all([...selectedIds].map(id =>
+        api.patch(`/extratos/${id}/conta-bancaria`, { contaBancariaId: bulkConta || null })
+      ))
+      qc.invalidateQueries({ queryKey: ['extratos'] })
+      setSelectedIds(new Set())
+      setBulkConta('')
+    } finally {
+      setApplyingBulk(false)
+    }
+  }
+
   // Totais calculados sobre todos os itens da página atual
   const totalEntradas = extratos.filter((e) => e.valor > 0).reduce((s, e) => s + e.valor, 0)
   const totalSaidas = extratos.filter((e) => e.valor < 0).reduce((s, e) => s + Math.abs(e.valor), 0)
@@ -690,6 +746,60 @@ export default function ExtratosPage() {
         )}
       </div>
 
+      {/* Barra de ação em massa */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 mb-4 px-4 py-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl flex-wrap">
+          <span className="text-sm font-medium text-blue-700 dark:text-blue-300 whitespace-nowrap">
+            {selectedIds.size} selecionado{selectedIds.size !== 1 ? 's' : ''}
+          </span>
+          <div className="w-px h-5 bg-blue-200 dark:bg-blue-700 mx-1" />
+          <div className="flex items-center gap-2">
+            <select
+              value={bulkCategoria}
+              onChange={e => setBulkCategoria(e.target.value)}
+              className="text-sm border border-blue-300 dark:border-blue-700 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              <option value="">Aplicar categoria...</option>
+              {categorias.map(c => (
+                <option key={c.id} value={c.id}>{c.name} ({c.tipo === 'RECEITA' ? 'Receita' : 'Despesa'})</option>
+              ))}
+            </select>
+            <button
+              onClick={applyBulkCategoria}
+              disabled={!bulkCategoria || applyingBulk}
+              className="px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white rounded-lg transition-colors whitespace-nowrap"
+            >
+              {applyingBulk ? '...' : 'Aplicar'}
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={bulkConta}
+              onChange={e => setBulkConta(e.target.value)}
+              className="text-sm border border-blue-300 dark:border-blue-700 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              <option value="">Aplicar banco...</option>
+              {contas.map(c => (
+                <option key={c.id} value={c.id}>{c.nome} — {c.banco}</option>
+              ))}
+            </select>
+            <button
+              onClick={applyBulkConta}
+              disabled={!bulkConta || applyingBulk}
+              className="px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white rounded-lg transition-colors whitespace-nowrap"
+            >
+              {applyingBulk ? '...' : 'Aplicar'}
+            </button>
+          </div>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="ml-auto text-xs text-blue-500 hover:text-blue-700 hover:underline whitespace-nowrap"
+          >
+            Limpar seleção
+          </button>
+        </div>
+      )}
+
       {/* Saldo Anterior */}
       <div className="mb-4">
         <SaldoAnteriorCard mes={mes} ano={ano} />
@@ -750,8 +860,9 @@ export default function ExtratosPage() {
         ) : (
           <>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm" style={{ tableLayout: 'fixed', minWidth: '1100px' }}>
+            <table className="w-full text-sm" style={{ tableLayout: 'fixed', minWidth: '1140px' }}>
               <colgroup>
+                <col style={{ width: '40px' }} />
                 <col style={{ width: '88px' }} />
                 <col style={{ width: '16%' }} />
                 <col style={{ width: '20%' }} />
@@ -763,6 +874,15 @@ export default function ExtratosPage() {
               </colgroup>
               <thead className="bg-gray-50 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700">
                 <tr>
+                  <th className="px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleSelectAll}
+                      title="Selecionar todos da página"
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer"
+                    />
+                  </th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Data</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Lançamento</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Razão Social</th>
@@ -775,7 +895,15 @@ export default function ExtratosPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                 {extratos.map((e) => (
-                  <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/40 group align-top">
+                  <tr key={e.id} className={`hover:bg-gray-50 dark:hover:bg-slate-700/40 group align-top ${selectedIds.has(e.id) ? 'bg-blue-50/60 dark:bg-blue-950/20' : ''}`}>
+                    <td className="px-3 py-3 pt-3.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(e.id)}
+                        onChange={() => toggleSelect(e.id)}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer"
+                      />
+                    </td>
                     <td className="px-4 py-3 text-gray-500 dark:text-slate-400 whitespace-nowrap text-xs pt-3.5">{formatDate(e.data)}</td>
                     <td className="px-4 py-3 text-gray-700 dark:text-slate-300 leading-snug">
                       {e.tipoPagamento ?? '—'}
