@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 
 const PUBLIC_PATHS = ['/login', '/register', '/verificar-email', '/verificar-pendente', '/esqueci-senha', '/resetar-senha']
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const token = request.cookies.get('financeiro_token')
   const pathname = request.nextUrl.pathname
 
