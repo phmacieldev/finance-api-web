@@ -57,7 +57,7 @@ function SectionCard({ title, icon: Icon, children }: {
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
       <div className="flex items-center gap-2.5 px-6 py-4 border-b border-gray-100 dark:border-slate-700">
         <Icon className="w-4 h-4 text-blue-500" />
-        <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h2>
       </div>
       <div className="p-6">{children}</div>
     </div>
@@ -71,7 +71,7 @@ function Field({ label, error, children }: {
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1.5">{label}</label>
+      <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">{label}</label>
       {children}
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
@@ -82,7 +82,7 @@ function Input({ className = '', ...props }: React.InputHTMLAttributes<HTMLInput
   return (
     <input
       className={`w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg
-        bg-white dark:bg-slate-700 text-gray-900
+        bg-white dark:bg-slate-700 text-gray-900 dark:text-white
         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
         disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${className}`}
       {...props}
@@ -147,7 +147,7 @@ function DadosPessoais({ perfil, onSuccess, onError }: {
         </Field>
         <div className="flex items-center gap-3 pt-1">
           <span className="text-xs text-gray-400">
-            Função: <span className="font-medium text-gray-600">{perfil.role === 'ADMIN' ? 'Administrador' : 'Usuário'}</span>
+            Função: <span className="font-medium text-gray-600 dark:text-gray-300">{perfil.role === 'ADMIN' ? 'Administrador' : 'Usuário'}</span>
           </span>
           <button
             type="submit"
@@ -293,8 +293,8 @@ export default function ConfiguracoesPage() {
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-xl font-semibold text-gray-900">Configurações</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Gerencie seus dados pessoais e da empresa</p>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Configurações</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Gerencie seus dados pessoais e da empresa</p>
       </div>
 
       {isLoading ? (

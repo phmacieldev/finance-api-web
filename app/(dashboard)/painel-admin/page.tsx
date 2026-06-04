@@ -45,6 +45,9 @@ export default function PainelAdminPage() {
   const [showAddUser, setShowAddUser] = useState(false)
   const [addUserForm, setAddUserForm] = useState({ name: '', email: '', password: '', role: 'USER' as CompanyRole })
   const [addUserError, setAddUserError] = useState('')
+  const [showNovoAdmin, setShowNovoAdmin] = useState(false)
+  const [novoAdminForm, setNovoAdminForm] = useState({ name: '', email: '', password: '' })
+  const [novoAdminError, setNovoAdminError] = useState('')
 
   const { data: empresas = [], isLoading } = useQuery<AdminEnterprise[]>({
     queryKey: ['admin-empresas', filtroStatus],
@@ -99,6 +102,25 @@ export default function PainelAdminPage() {
     onError: (e: unknown) => setAddUserError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao cadastrar'),
   })
 
+  const { mutate: criarAdmin, isPending: criandoAdmin } = useMutation({
+    mutationFn: () => api.post('/admin/plataforma/usuarios', novoAdminForm),
+    onSuccess: () => {
+      setNovoAdminForm({ name: '', email: '', password: '' })
+      setShowNovoAdmin(false)
+      setNovoAdminError('')
+    },
+    onError: (e: unknown) => setNovoAdminError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao criar admin'),
+  })
+
+  function submitNovoAdmin() {
+    if (!novoAdminForm.name.trim() || !novoAdminForm.email.trim() || !novoAdminForm.password.trim()) {
+      setNovoAdminError('Preencha todos os campos')
+      return
+    }
+    setNovoAdminError('')
+    criarAdmin()
+  }
+
   const pendentes = empresas.filter(e => e.status === 'PENDENTE').length
 
   function abrirEmpresa(e: AdminEnterprise) {
@@ -127,11 +149,19 @@ export default function PainelAdminPage() {
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Painel Admin</h1>
           <p className="text-sm text-gray-500 mt-0.5">Gerencie as empresas cadastradas na plataforma</p>
         </div>
-        {pendentes > 0 && !selectedEmpresa && (
-          <span className="bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 text-sm font-medium px-3 py-1 rounded-full">
-            {pendentes} pendente{pendentes !== 1 ? 's' : ''}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {pendentes > 0 && !selectedEmpresa && (
+            <span className="bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 text-sm font-medium px-3 py-1 rounded-full">
+              {pendentes} pendente{pendentes !== 1 ? 's' : ''}
+            </span>
+          )}
+          <button
+            onClick={() => { setShowNovoAdmin(true); setNovoAdminError('') }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Novo Admin
+          </button>
+        </div>
       </div>
 
       {/* Lista de empresas */}
@@ -404,6 +434,48 @@ export default function PainelAdminPage() {
               </table>
             </div>
           )}
+        </div>
+      )}
+      {showNovoAdmin && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-sm shadow-xl">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-semibold text-gray-900 dark:text-white">Novo Administrador</h3>
+              <button onClick={() => setShowNovoAdmin(false)}><X className="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" /></button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Cria um usuário com acesso total à plataforma (PLATFORM_ADMIN), sem vínculo com empresa.</p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Nome</label>
+                <input value={novoAdminForm.name} onChange={e => setNovoAdminForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="Nome completo"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">E-mail</label>
+                <input value={novoAdminForm.email} onChange={e => setNovoAdminForm(f => ({ ...f, email: e.target.value }))}
+                  type="email" placeholder="admin@plataforma.com"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Senha</label>
+                <input value={novoAdminForm.password} onChange={e => setNovoAdminForm(f => ({ ...f, password: e.target.value }))}
+                  type="password" placeholder="Mínimo 6 caracteres"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500" />
+              </div>
+              {novoAdminError && <p className="text-red-500 text-xs">{novoAdminError}</p>}
+              <div className="flex gap-3 pt-1">
+                <button onClick={() => setShowNovoAdmin(false)}
+                  className="flex-1 py-2 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700">
+                  Cancelar
+                </button>
+                <button onClick={submitNovoAdmin} disabled={criandoAdmin}
+                  className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm rounded-lg">
+                  {criandoAdmin ? 'Criando...' : 'Criar Admin'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
