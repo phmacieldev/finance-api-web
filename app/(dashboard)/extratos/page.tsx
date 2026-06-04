@@ -578,10 +578,9 @@ export default function ExtratosPage() {
           ['sem-categoria', mes, ano],
           (old) => old ? old.filter((e) => e.id !== id) : old
         )
-        qc.setQueriesData<any>(
+        qc.setQueriesData<{ transacoesSemCategoria?: number }>(
           { queryKey: ['dashboard'], exact: false },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (old: any) => old
+          (old) => old
             ? { ...old, transacoesSemCategoria: Math.max(0, (old.transacoesSemCategoria ?? 0) - 1) }
             : old
         )
