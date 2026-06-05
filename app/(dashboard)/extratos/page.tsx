@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import {
-  Upload, X, FileText, FileSpreadsheet, Pencil,
+  Upload, X, FileText, FileSpreadsheet, Pencil, Plus,
   AlertTriangle, XCircle, CheckCircle2, Trash2, Filter
 } from 'lucide-react'
 import api from '@/lib/api'
@@ -493,6 +493,142 @@ function FileIcon({ file }: { file: File }) {
     : <FileText className="w-8 h-8 text-blue-500 mx-auto mb-2" />
 }
 
+// ─── Modal de novo/editar lançamento ──────────────────────────────────────────
+
+interface LancamentoForm {
+  data: string
+  descricao: string
+  tipo: 'RECEITA' | 'DESPESA'
+  valorNum: number
+  categoriaId: string
+  contaBancariaId: string
+}
+
+function NovoLancamentoModal({
+  extrato, categorias, contas, onClose, onSave,
+}: {
+  extrato?: Extrato
+  categorias: Categoria[]
+  contas: ContaBancaria[]
+  onClose: () => void
+  onSave: (form: LancamentoForm) => void
+}) {
+  const isEdit = !!extrato
+  const [tipo, setTipo] = useState<'RECEITA' | 'DESPESA'>(
+    !extrato ? 'DESPESA' : extrato.valor >= 0 ? 'RECEITA' : 'DESPESA'
+  )
+  const [form, setForm] = useState({
+    data: extrato?.data ?? new Date().toISOString().slice(0, 10),
+    descricao: extrato?.razaoSocial ?? '',
+    valor: extrato ? Math.abs(extrato.valor).toFixed(2).replace('.', ',') : '',
+    categoriaId: extrato?.categoriaId ?? '',
+    contaBancariaId: extrato?.contaBancariaId ?? '',
+  })
+  const [erro, setErro] = useState('')
+
+  const categoriasFiltradas = categorias.filter(c => c.tipo === tipo)
+
+  function handleSubmit() {
+    const num = parseFloat(form.valor.replace(/\./g, '').replace(',', '.'))
+    if (!form.data || !form.descricao.trim() || isNaN(num) || num <= 0) {
+      setErro('Preencha data, descrição e valor maior que zero')
+      return
+    }
+    onSave({ data: form.data, descricao: form.descricao, tipo, valorNum: num, categoriaId: form.categoriaId, contaBancariaId: form.contaBancariaId })
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-700">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+            {isEdit ? 'Editar lançamento' : 'Novo lançamento'}
+          </h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="flex gap-2">
+            {(['RECEITA', 'DESPESA'] as const).map(t => (
+              <button key={t} type="button"
+                onClick={() => { setTipo(t); setForm(f => ({ ...f, categoriaId: '' })); setErro('') }}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  tipo === t
+                    ? t === 'RECEITA' ? 'bg-green-600 text-white' : 'bg-red-500 text-white'
+                    : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
+                }`}
+              >
+                {t === 'RECEITA' ? '↑ Entrada' : '↓ Saída'}
+              </button>
+            ))}
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Data *</label>
+            <input type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:border-blue-400"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Descrição *</label>
+            <input type="text" value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))}
+              placeholder="Ex: Pagamento fornecedor"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-400"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Valor (R$) *</label>
+            <div className="flex items-center border border-gray-200 dark:border-slate-600 rounded-lg overflow-hidden focus-within:border-blue-400">
+              <span className="px-3 py-2 text-sm text-gray-400 bg-gray-50 dark:bg-slate-700 border-r border-gray-200 dark:border-slate-600">R$</span>
+              <input type="text" value={form.valor} onChange={e => setForm(f => ({ ...f, valor: e.target.value }))}
+                placeholder="0,00"
+                className="flex-1 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none"
+              />
+            </div>
+          </div>
+          {!isEdit && (
+            <div>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Categoria (opcional)</label>
+              <select value={form.categoriaId} onChange={e => setForm(f => ({ ...f, categoriaId: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 dark:text-gray-200 focus:outline-none focus:border-blue-400"
+              >
+                <option value="">— sem categoria</option>
+                {categoriasFiltradas.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          )}
+          {!isEdit && contas.length > 0 && (
+            <div>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Conta bancária (opcional)</label>
+              <select value={form.contaBancariaId} onChange={e => setForm(f => ({ ...f, contaBancariaId: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 dark:text-gray-200 focus:outline-none focus:border-blue-400"
+              >
+                <option value="">— sem conta</option>
+                {contas.map(c => <option key={c.id} value={c.id}>{c.nome} — {c.banco}</option>)}
+              </select>
+            </div>
+          )}
+          {erro && <p className="text-sm text-red-500">{erro}</p>}
+        </div>
+        <div className="px-6 pb-6 flex gap-3 justify-end">
+          <button onClick={onClose}
+            className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700"
+          >
+            Cancelar
+          </button>
+          <button onClick={handleSubmit}
+            className={`px-5 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
+              tipo === 'RECEITA' ? 'bg-green-600 hover:bg-green-500' : 'bg-red-500 hover:bg-red-400'
+            }`}
+          >
+            {isEdit ? 'Salvar' : 'Criar lançamento'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Página principal ──────────────────────────────────────────────────────────
 
 export default function ExtratosPage() {
@@ -519,6 +655,8 @@ export default function ExtratosPage() {
   const [bulkCategoria, setBulkCategoria] = useState('')
   const [bulkConta, setBulkConta] = useState('')
   const [applyingBulk, setApplyingBulk] = useState(false)
+  const [showNovoLancamento, setShowNovoLancamento] = useState(false)
+  const [editandoExtrato, setEditandoExtrato] = useState<Extrato | null>(null)
 
   // Reset page and selection when filters/month change
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -665,6 +803,41 @@ export default function ExtratosPage() {
     onError: () => toast('Erro ao excluir lançamento'),
   })
 
+  const { mutate: criarLancamento } = useMutation({
+    mutationFn: (form: LancamentoForm) =>
+      api.post<Extrato>('/extratos', {
+        data: form.data, descricao: form.descricao, tipo: form.tipo, valor: form.valorNum,
+        categoriaId: form.categoriaId || undefined,
+        contaBancariaId: form.contaBancariaId || undefined,
+      }).then(r => r.data),
+    onSuccess: () => {
+      setShowNovoLancamento(false)
+      qc.invalidateQueries({ queryKey: ['extratos'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['sem-categoria'] })
+      toast('Lançamento criado', 'success')
+    },
+    onError: () => toast('Erro ao criar lançamento'),
+  })
+
+  const { mutate: editarLancamento } = useMutation({
+    mutationFn: ({ id, form }: { id: string; form: LancamentoForm }) =>
+      api.patch<Extrato>(`/extratos/${id}`, {
+        data: form.data, descricao: form.descricao,
+        valor: form.tipo === 'RECEITA' ? form.valorNum : -form.valorNum,
+      }).then(r => r.data),
+    onSuccess: (updated) => {
+      setEditandoExtrato(null)
+      qc.setQueriesData<PageResponse<Extrato>>(
+        { queryKey: ['extratos'], exact: false },
+        (old) => old ? { ...old, content: old.content.map(e => e.id === updated.id ? updated : e) } : old
+      )
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+      toast('Lançamento atualizado', 'success')
+    },
+    onError: () => toast('Erro ao editar lançamento'),
+  })
+
   function isValidFile(f: File) {
     const n = f.name.toLowerCase()
     return n.endsWith('.csv') || n.endsWith('.xlsx') || n.endsWith('.xls')
@@ -759,6 +932,12 @@ export default function ExtratosPage() {
         </div>
         <div className="flex items-center gap-3">
           <MonthNav nav={nav} />
+          <button
+            onClick={() => setShowNovoLancamento(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Novo lançamento
+          </button>
           <button
             onClick={() => setShowImport(true)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
@@ -1033,13 +1212,22 @@ export default function ExtratosPage() {
                           </button>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => setConfirmDelete(e.id)}
-                          title="Excluir lançamento"
-                          className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-300 hover:text-red-500 rounded transition-all"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
+                          <button
+                            onClick={() => setEditandoExtrato(e)}
+                            title="Editar lançamento"
+                            className="p-1.5 text-gray-300 hover:text-blue-500 rounded transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setConfirmDelete(e.id)}
+                            title="Excluir lançamento"
+                            className="p-1.5 text-gray-300 hover:text-red-500 rounded transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -1074,6 +1262,24 @@ export default function ExtratosPage() {
           </>
         )}
       </div>
+
+      {showNovoLancamento && (
+        <NovoLancamentoModal
+          categorias={categorias}
+          contas={contas}
+          onClose={() => setShowNovoLancamento(false)}
+          onSave={(form) => criarLancamento(form)}
+        />
+      )}
+      {editandoExtrato && (
+        <NovoLancamentoModal
+          extrato={editandoExtrato}
+          categorias={categorias}
+          contas={contas}
+          onClose={() => setEditandoExtrato(null)}
+          onSave={(form) => editarLancamento({ id: editandoExtrato.id, form })}
+        />
+      )}
 
       {/* Modal de importação */}
       {showImport && (

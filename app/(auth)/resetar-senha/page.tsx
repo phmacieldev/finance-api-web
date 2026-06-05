@@ -11,7 +11,7 @@ import { Loader2 } from 'lucide-react'
 import api from '@/lib/api'
 
 const schema = z.object({
-  novaSenha: z.string().min(6, 'Mínimo 6 caracteres'),
+  novaSenha: z.string().min(8, 'Mínimo 8 caracteres'),
   confirmar: z.string().min(1, 'Confirme a senha'),
 }).refine((v) => v.novaSenha === v.confirmar, {
   message: 'As senhas não coincidem',
@@ -70,7 +70,7 @@ function ResetarSenhaContent() {
               <input
                 {...register('novaSenha')}
                 type="password"
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 8 caracteres"
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500"
               />
               {errors.novaSenha && <p className="text-red-400 text-xs mt-1">{errors.novaSenha.message}</p>}

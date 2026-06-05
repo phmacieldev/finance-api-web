@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { Info } from 'lucide-react'
+import { Info, Printer } from 'lucide-react'
 import api from '@/lib/api'
 import { formatCurrency, monthName } from '@/lib/utils'
 import { useMesSelecionado } from '@/hooks/useMesSelecionado'
@@ -24,10 +24,18 @@ export default function DrePage() {
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">DRE</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Demonstrativo de Resultados do Exercício</p>
         </div>
-        <MonthNav nav={nav} />
+        <div className="flex items-center gap-3 no-print">
+          <MonthNav nav={nav} />
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 transition-colors"
+          >
+            <Printer className="w-4 h-4" /> PDF
+          </button>
+        </div>
       </div>
 
-      <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3 flex items-start gap-2 mb-6">
+      <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3 flex items-start gap-2 mb-6 no-print">
         <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
         <p className="text-sm text-blue-700 dark:text-blue-300">
           Para o DRE ser preenchido, categorize os lançamentos em <strong>Extratos</strong> e mapeie cada categoria para uma linha do DRE em <strong>Categorias</strong>.

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { removeToken, getRefreshToken } from '@/lib/auth'
 import { clearMesSelecionado, useMesSelecionado } from '@/hooks/useMesSelecionado'
@@ -36,6 +37,8 @@ const navItemsAdmin = [
   { href: '/configuracoes',   label: 'Configurações',  icon: Settings },
 ]
 
+const ADMIN_PATHS = ['/painel-admin', '/admin-usuarios', '/configuracoes']
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -49,6 +52,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   })
   const isPlatformAdmin = me?.role === 'PLATFORM_ADMIN'
   const isUser = me?.role === 'USER'
+
+  useEffect(() => {
+    if (!meLoading && isPlatformAdmin) {
+      const onAdminRoute = ADMIN_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
+      if (!onAdminRoute) router.replace('/painel-admin')
+    }
+  }, [isPlatformAdmin, meLoading, pathname, router])
 
   const { data: semCatList = [] } = useQuery<{ id: string }[]>({
     queryKey: ['sem-categoria', mes, ano],

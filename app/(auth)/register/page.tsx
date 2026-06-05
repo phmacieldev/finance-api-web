@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
@@ -11,12 +11,21 @@ import api from '@/lib/api'
 import type { TokenResponseDTO } from '@/types'
 import type { UseFormRegister, FieldErrors } from 'react-hook-form'
 
+function maskCnpj(value: string): string {
+  const d = value.replace(/\D/g, '').slice(0, 14)
+  return d
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2')
+}
+
 const schema = z.object({
   userName: z.string().min(2, 'Nome obrigatório'),
   email: z.string().email('E-mail inválido'),
   password: z.string().min(8, 'Mínimo 8 caracteres'),
   enterpriseName: z.string().min(2, 'Nome da empresa obrigatório'),
-  cnpj: z.string().min(14, 'CNPJ inválido'),
+  cnpj: z.string().refine(v => v.replace(/\D/g, '').length === 14, 'CNPJ deve ter 14 dígitos'),
 })
 type Form = z.infer<typeof schema>
 
@@ -42,13 +51,13 @@ export default function RegisterPage() {
   const router = useRouter()
   const [error, setError] = useState('')
 
-  const { register, handleSubmit, formState: { errors } } = useForm<Form>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<Form>({
     resolver: zodResolver(schema),
   })
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: Form) =>
-      api.post<TokenResponseDTO>('/auth/register', data).then((r) => r.data),
+      api.post<TokenResponseDTO>('/auth/register', { ...data, cnpj: data.cnpj.replace(/\D/g, '') }).then((r) => r.data),
     onSuccess: (data, variables) => {
       // Registration requires email verification — redirect to pending page
       router.push(`/verificar-pendente?email=${encodeURIComponent(variables.email)}`)
@@ -75,7 +84,19 @@ export default function RegisterPage() {
             <Field label="E-mail" name="email" type="email" placeholder="seu@email.com" register={register} errors={errors} />
             <Field label="Senha" name="password" type="password" placeholder="Mínimo 8 caracteres" register={register} errors={errors} />
             <Field label="Nome da empresa" name="enterpriseName" placeholder="Minha Empresa Ltda." register={register} errors={errors} />
-            <Field label="CNPJ" name="cnpj" placeholder="00.000.000/0001-00" register={register} errors={errors} />
+            <div>
+              <label className="block text-sm text-slate-300 mb-1">CNPJ</label>
+              <Controller name="cnpj" control={control} render={({ field }) => (
+                <input
+                  {...field}
+                  value={field.value ?? ''}
+                  onChange={e => field.onChange(maskCnpj(e.target.value))}
+                  placeholder="00.000.000/0001-00"
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500"
+                />
+              )} />
+              {errors.cnpj && <p className="text-red-400 text-xs mt-1">{errors.cnpj.message}</p>}
+            </div>
 
             {error && (
               <div className="bg-red-900/40 border border-red-700 rounded-lg px-3 py-2 text-red-400 text-sm">

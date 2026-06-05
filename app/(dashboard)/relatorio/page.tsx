@@ -5,6 +5,7 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
+import { Printer } from 'lucide-react'
 import api from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
 import type { RelatorioMensal } from '@/types'
@@ -41,7 +42,7 @@ export default function RelatorioPage() {
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Relatório Comparativo</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Evolução mensal de entradas, saídas e saldo</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 no-print">
           {MESES_OPCOES.map((m) => (
             <button
               key={m}
@@ -53,6 +54,12 @@ export default function RelatorioPage() {
               {m} meses
             </button>
           ))}
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 transition-colors"
+          >
+            <Printer className="w-4 h-4" /> PDF
+          </button>
         </div>
       </div>
 

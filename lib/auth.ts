@@ -3,12 +3,14 @@ import Cookies from 'js-cookie'
 export const AUTH_COOKIE    = 'financeiro_token'
 export const REFRESH_COOKIE = 'financeiro_refresh'
 
+const secure = typeof window !== 'undefined' && window.location.protocol === 'https:'
+
 export function saveToken(token: string) {
-  Cookies.set(AUTH_COOKIE, token, { expires: 1 / 96, sameSite: 'strict' }) // 15 min
+  Cookies.set(AUTH_COOKIE, token, { expires: 1 / 96, sameSite: 'strict', secure }) // 15 min
 }
 
 export function saveRefreshToken(token: string) {
-  Cookies.set(REFRESH_COOKIE, token, { expires: 30, sameSite: 'strict' })
+  Cookies.set(REFRESH_COOKIE, token, { expires: 30, sameSite: 'strict', secure })
 }
 
 export function getToken(): string | undefined {

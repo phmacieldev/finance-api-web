@@ -18,7 +18,7 @@ const ROLE_META: Record<CompanyRole, { label: string; desc: string; color: strin
 const inviteSchema = z.object({
   name: z.string().min(2, 'Nome obrigatório'),
   email: z.string().email('E-mail inválido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  password: z.string().min(8, 'Mínimo 8 caracteres'),
   role: z.enum(['CEO', 'OWNER', 'USER']),
 })
 type InviteForm = z.infer<typeof inviteSchema>
@@ -218,7 +218,7 @@ export default function UsuariosPage() {
               </div>
               <div>
                 <label className="block text-sm text-white mb-1">Senha temporária</label>
-                <input {...register('password')} type="password" placeholder="Mínimo 6 caracteres"
+                <input {...register('password')} type="password" placeholder="Mínimo 8 caracteres"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg text-sm focus:outline-none focus:border-blue-500" />
                 {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
               </div>

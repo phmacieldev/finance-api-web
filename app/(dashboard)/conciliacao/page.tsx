@@ -28,12 +28,10 @@ export default function ConciliacaoPage() {
 
   const storageKey = `saldo_banco_${mes}_${ano}`
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     const saved = localStorage.getItem(storageKey)
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved) setSaldoInput(saved)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     else setSaldoInput('')
   }, [storageKey])
 
