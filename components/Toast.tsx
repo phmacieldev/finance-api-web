@@ -1,27 +1,20 @@
 'use client'
 
-import { useState, useCallback, useEffect, createContext, useContext } from 'react'
-import { CheckCircle, XCircle, X } from 'lucide-react'
+import { createContext, useContext, useState, useCallback, useRef } from 'react'
+import { X, CheckCircle2, AlertCircle } from 'lucide-react'
 
 type ToastType = 'success' | 'error'
-
-interface ToastItem {
-  id: number
-  message: string
-  type: ToastType
-}
-
+interface ToastItem { id: number; message: string; type: ToastType }
 type ToastFn = (message: string, type?: ToastType) => void
 
 const ToastContext = createContext<ToastFn>(() => {})
 
-let counter = 0
-
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([])
+  const counter = useRef(0)
 
-  const toast = useCallback((message: string, type: ToastType = 'error') => {
-    const id = ++counter
+  const toast = useCallback<ToastFn>((message, type = 'error') => {
+    const id = ++counter.current
     setToasts(prev => [...prev, { id, message, type }])
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000)
   }, [])
@@ -29,32 +22,29 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={toast}>
       {children}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-50">
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
         {toasts.map(t => (
-          <ToastItem key={t.id} toast={t} onClose={() => setToasts(prev => prev.filter(x => x.id !== t.id))} />
+          <div
+            key={t.id}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white max-w-xs pointer-events-auto ${
+              t.type === 'error' ? 'bg-red-500' : 'bg-green-600'
+            }`}
+          >
+            {t.type === 'error'
+              ? <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              : <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            }
+            <span className="flex-1">{t.message}</span>
+            <button
+              onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
+              className="flex-shrink-0 opacity-70 hover:opacity-100"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         ))}
       </div>
     </ToastContext.Provider>
-  )
-}
-
-function ToastItem({ toast, onClose }: { toast: ToastItem; onClose: () => void }) {
-  useEffect(() => {
-    const t = setTimeout(onClose, 4000)
-    return () => clearTimeout(t)
-  }, [onClose])
-
-  return (
-    <div className={`flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg text-sm font-medium animate-in slide-in-from-right-4 fade-in
-      ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
-      {toast.type === 'success'
-        ? <CheckCircle className="w-4 h-4 flex-shrink-0" />
-        : <XCircle className="w-4 h-4 flex-shrink-0" />}
-      <span>{toast.message}</span>
-      <button onClick={onClose} className="ml-2 opacity-70 hover:opacity-100 transition-opacity">
-        <X className="w-3.5 h-3.5" />
-      </button>
-    </div>
   )
 }
 

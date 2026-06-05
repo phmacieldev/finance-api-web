@@ -10,6 +10,7 @@ import api from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
 import type { Previsao, Categoria, PageResponse } from '@/types'
 import { FREQUENCIAS } from '@/types'
+import { useToast } from '@/components/Toast'
 
 const FREQ_LABELS: Record<string, string> = {
   UNICA: 'Única', SEMANAL: 'Semanal', QUINZENAL: 'Quinzenal',
@@ -33,13 +34,14 @@ const inputCls = 'w-full px-3 py-2 border border-gray-300 dark:border-slate-600 
 
 export default function PrevisoesPage() {
   const qc = useQueryClient()
+  const toast = useToast()
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState<'ALL' | 'RECEITA' | 'DESPESA'>('ALL')
   const [page, setPage] = useState(0)
 
   const { data: pageData, isLoading } = useQuery({
     queryKey: ['previsoes', page],
-    queryFn: () => api.get<PageResponse<Previsao>>(`/previsoes?page=${page}&size=100`).then((r) => r.data),
+    queryFn: () => api.get<PageResponse<Previsao>>(`/previsoes?page=${page}&size=20`).then((r) => r.data),
   })
   const previsoes = pageData?.content ?? []
   const totalPages = pageData?.totalPages ?? 1
@@ -63,12 +65,23 @@ export default function PrevisoesPage() {
       dataFim: data.dataFim || undefined,
       diaRecorrencia: data.diaRecorrencia || undefined,
     }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['previsoes'] }); reset(); setOpen(false); setPage(0) },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['previsoes'] })
+      reset()
+      setOpen(false)
+      setPage(0)
+      toast('Previsão criada com sucesso', 'success')
+    },
+    onError: () => toast('Erro ao criar previsão'),
   })
 
   const { mutate: desativar } = useMutation({
     mutationFn: (id: string) => api.delete(`/previsoes/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['previsoes'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['previsoes'] })
+      toast('Previsão removida', 'success')
+    },
+    onError: () => toast('Erro ao remover previsão'),
   })
 
   const filtradas = previsoes.filter((p) => filter === 'ALL' || p.tipo === filter)

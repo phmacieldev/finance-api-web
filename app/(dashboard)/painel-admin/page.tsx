@@ -6,6 +6,7 @@ import {
   CheckCircle2, XCircle, Clock, Building2, ChevronRight,
   Crown, Shield, User as UserIcon, Trash2, ArrowLeft, CreditCard, Plus, X,
 } from 'lucide-react'
+
 import api from '@/lib/api'
 import type { AdminEnterprise, AdminUser, CompanyRole } from '@/types'
 
@@ -86,6 +87,14 @@ export default function PainelAdminPage() {
   const { mutate: removerUser } = useMutation({
     mutationFn: (userId: string) => api.delete(`/admin/empresas/${selectedEmpresa!.id}/usuarios/${userId}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-empresa-usuarios'] }); setConfirmDeleteUser(null) },
+  })
+  const { mutate: deletarEmpresa, isPending: deletandoEmpresa } = useMutation({
+    mutationFn: (id: string) => api.delete(`/admin/empresas/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-empresas'] })
+      setSelectedEmpresa(null)
+      setConfirmDeleteEmpresa(false)
+    },
   })
   const { mutate: alterarRole } = useMutation({
     mutationFn: ({ id, role }: { id: string; role: string }) =>
@@ -265,7 +274,7 @@ export default function PainelAdminPage() {
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{selectedEmpresa.name}</h2>
                 <p className="text-sm text-gray-500 mt-0.5">CNPJ: {selectedEmpresa.cnpj} &middot; Cadastro: {formatDate(selectedEmpresa.createdAt)}</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {selectedEmpresa.status !== 'ATIVA' && (
                   <button onClick={() => aprovar(selectedEmpresa.id)}
                     className="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-sm rounded-lg">
@@ -276,6 +285,27 @@ export default function PainelAdminPage() {
                   <button onClick={() => rejeitar(selectedEmpresa.id)}
                     className="flex items-center gap-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/40 text-red-700 dark:text-red-400 text-sm rounded-lg">
                     <XCircle className="w-4 h-4" /> Bloquear
+                  </button>
+                )}
+                {confirmDeleteEmpresa ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-red-600 dark:text-red-400 font-medium">Apagar tudo?</span>
+                    <button
+                      onClick={() => deletarEmpresa(selectedEmpresa.id)}
+                      disabled={deletandoEmpresa}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm rounded-lg"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> {deletandoEmpresa ? 'Deletando...' : 'Confirmar'}
+                    </button>
+                    <button onClick={() => setConfirmDeleteEmpresa(false)}
+                      className="px-3 py-1.5 border border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700">
+                      Cancelar
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmDeleteEmpresa(true)}
+                    className="flex items-center gap-1 px-3 py-1.5 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 text-sm rounded-lg">
+                    <Trash2 className="w-3.5 h-3.5" /> Deletar empresa
                   </button>
                 )}
               </div>
