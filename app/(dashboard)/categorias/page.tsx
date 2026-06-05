@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, X, Trash2, Tag } from 'lucide-react'
 import { useForm } from 'react-hook-form'
@@ -8,7 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import api from '@/lib/api'
 import type { Categoria } from '@/types'
-import { DRE_CATEGORIAS } from '@/types'
 import { useToast } from '@/components/Toast'
 import { EmptyState } from '@/components/EmptyState'
 import { TableSkeleton } from '@/components/TableSkeleton'
@@ -34,6 +33,11 @@ const DRE_LABELS: Record<string, string> = {
   OUTROS: 'Outros',
 }
 
+const DRE_POR_TIPO: Record<string, string[]> = {
+  RECEITA: ['RECEITA_BRUTA', 'DEDUCAO_RECEITA', 'RECEITA_FINANCEIRA'],
+  DESPESA: ['CPV', 'DESPESA_VENDAS', 'DESPESA_ADMINISTRATIVA', 'DESPESA_FINANCEIRA', 'IMPOSTO', 'OUTROS'],
+}
+
 export default function CategoriasPage() {
   const qc = useQueryClient()
   const toast = useToast()
@@ -46,13 +50,23 @@ export default function CategoriasPage() {
     queryFn: () => api.get<Categoria[]>('/categorias').then((r) => r.data),
   })
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<Form>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<Form>({
     resolver: zodResolver(schema),
-    defaultValues: { tipo: 'DESPESA' },
+    defaultValues: { tipo: 'DESPESA', dreCategoria: '' },
   })
 
+  const tipoAtual = watch('tipo')
+  const dreOptions = DRE_POR_TIPO[tipoAtual] ?? []
+
+  useEffect(() => {
+    setValue('dreCategoria', '')
+  }, [tipoAtual, setValue])
+
   const { mutate: criar, isPending } = useMutation({
-    mutationFn: (data: Form) => api.post('/categorias', data),
+    mutationFn: (data: Form) => api.post('/categorias', {
+      ...data,
+      dreCategoria: data.dreCategoria || null,
+    }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['categorias'] })
       reset()
@@ -208,7 +222,7 @@ export default function CategoriasPage() {
                 <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Linha do DRE <span className="text-gray-400">(opcional)</span></label>
                 <select {...register('dreCategoria')} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500">
                   <option value="">— não mapeado</option>
-                  {DRE_CATEGORIAS.map((d) => (
+                  {dreOptions.map((d) => (
                     <option key={d} value={d}>{DRE_LABELS[d] ?? d}</option>
                   ))}
                 </select>
