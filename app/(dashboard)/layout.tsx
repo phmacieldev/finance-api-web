@@ -15,6 +15,7 @@ import {
   GitMerge, BarChart3, Download, LogOut, TrendingUp, Sun, Moon, Settings,
   Users, LineChart, Building2, ShieldCheck
 } from 'lucide-react'
+import { EmpresaSwitcher } from '@/components/EmpresaSwitcher'
 
 const navItemsApp = [
   { href: '/dashboard',       label: 'Dashboard',     icon: LayoutDashboard },
@@ -44,7 +45,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { theme, toggleTheme } = useTheme()
   const { mes, ano } = useMesSelecionado()
 
-  const { data: me, isLoading: meLoading } = useQuery<{ role: string; emailVerificado?: boolean }>({
+  const { data: me, isLoading: meLoading } = useQuery<{
+    role: string
+    emailVerificado?: boolean
+    email?: string
+    enterpriseId?: string
+    enterpriseName?: string
+  }>({
     queryKey: ['me'],
     queryFn: () => api.get('/me').then(r => r.data),
     staleTime: 300_000,
@@ -85,6 +92,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <TrendingUp className="w-5 h-5 text-blue-400 mr-2" />
           <span className="text-white font-semibold text-sm">Financeiro SaaS</span>
         </div>
+
+        {/* Seletor de empresa */}
+        {!meLoading && !isPlatformAdmin && me?.enterpriseId && (
+          <div className="border-b border-slate-800 py-1">
+            <EmpresaSwitcher
+              currentEnterpriseId={me.enterpriseId}
+              currentEnterpriseName={me.enterpriseName ?? ''}
+            />
+          </div>
+        )}
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
