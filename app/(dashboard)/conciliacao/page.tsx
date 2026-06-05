@@ -43,12 +43,14 @@ export default function ConciliacaoPage() {
     enabled,
   })
 
+  const btnInactive = 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Conciliação</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Previsto vs realizado por período</p>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Conciliação</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Previsto vs realizado por período</p>
         </div>
         {modo === 'mensal' && <MonthNav nav={nav} />}
       </div>
@@ -58,13 +60,13 @@ export default function ConciliacaoPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setModo('mensal')}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${modo === 'mensal' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${modo === 'mensal' ? 'bg-blue-600 text-white' : btnInactive}`}
           >
             Por mês
           </button>
           <button
             onClick={() => setModo('periodo')}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${modo === 'periodo' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${modo === 'periodo' ? 'bg-blue-600 text-white' : btnInactive}`}
           >
             Período customizado
           </button>
@@ -75,14 +77,14 @@ export default function ConciliacaoPage() {
               type="date"
               value={inicio}
               onChange={e => setInicio(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+              className="px-3 py-1.5 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-400"
             />
             <span className="text-gray-400 text-sm">até</span>
             <input
               type="date"
               value={fim}
               onChange={e => setFim(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+              className="px-3 py-1.5 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-400"
             />
           </div>
         )}
@@ -103,63 +105,63 @@ export default function ConciliacaoPage() {
           {/* Variance Summary */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4">
-              <p className="text-xs text-gray-500 mb-1">Variância Entradas</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Variância Entradas</p>
               <p className={`text-lg font-bold ${data.varianciaTotalEntradas >= 0 ? 'text-green-600' : 'text-red-500'}`}>
                 {formatCurrency(data.varianciaTotalEntradas)}
               </p>
-              <p className="text-xs text-gray-400 mt-1">realizado - previsto</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">realizado - previsto</p>
             </div>
             <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4">
-              <p className="text-xs text-gray-500 mb-1">Variância Saídas</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Variância Saídas</p>
               <p className={`text-lg font-bold ${data.varianciaTotalSaidas <= 0 ? 'text-green-600' : 'text-red-500'}`}>
                 {formatCurrency(data.varianciaTotalSaidas)}
               </p>
-              <p className="text-xs text-gray-400 mt-1">realizado - previsto</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">realizado - previsto</p>
             </div>
           </div>
 
           {/* Daily Table */}
           <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-200">
-              <h2 className="text-sm font-semibold text-gray-700">Detalhamento Diário</h2>
+            <div className="px-4 py-3 border-b border-gray-200 dark:border-slate-700">
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Detalhamento Diário</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700">
                   <tr>
-                    <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">Data</th>
-                    <th className="text-right px-4 py-2 text-xs font-medium text-gray-500 uppercase">Entradas</th>
+                    <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Data</th>
+                    <th className="text-right px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Entradas</th>
                     <th className="text-right px-4 py-2 text-xs font-medium text-green-600 uppercase">Prev.</th>
-                    <th className="text-right px-4 py-2 text-xs font-medium text-gray-500 uppercase">Saídas</th>
+                    <th className="text-right px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Saídas</th>
                     <th className="text-right px-4 py-2 text-xs font-medium text-red-600 uppercase">Prev.</th>
-                    <th className="text-right px-4 py-2 text-xs font-medium text-gray-500 uppercase">Saldo Dia</th>
-                    <th className="text-right px-4 py-2 text-xs font-medium text-gray-500 uppercase">Acumulado</th>
-                    <th className="text-center px-4 py-2 text-xs font-medium text-gray-500 uppercase">Var. Ent.</th>
-                    <th className="text-center px-4 py-2 text-xs font-medium text-gray-500 uppercase">Var. Saí.</th>
+                    <th className="text-right px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Saldo Dia</th>
+                    <th className="text-right px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Acumulado</th>
+                    <th className="text-center px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Var. Ent.</th>
+                    <th className="text-center px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Var. Saí.</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                   {data.itensDiarios
                     .filter((d) => d.entradas > 0 || d.saidas > 0 || d.entradasPrevistas > 0 || d.saidasPrevistas > 0)
                     .map((item) => (
-                      <tr key={item.data} className="hover:bg-gray-50">
-                        <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">{formatDate(item.data)}</td>
-                        <td className="px-4 py-2.5 text-right text-green-600 font-medium">
+                      <tr key={item.data} className="hover:bg-gray-50 dark:hover:bg-slate-700/40">
+                        <td className="px-4 py-2.5 text-gray-600 dark:text-gray-300 whitespace-nowrap">{formatDate(item.data)}</td>
+                        <td className="px-4 py-2.5 text-right text-green-600 dark:text-green-400 font-medium">
                           {item.entradas > 0 ? formatCurrency(item.entradas) : '—'}
                         </td>
-                        <td className="px-4 py-2.5 text-right text-green-400">
+                        <td className="px-4 py-2.5 text-right text-green-400 dark:text-green-600">
                           {item.entradasPrevistas > 0 ? formatCurrency(item.entradasPrevistas) : '—'}
                         </td>
-                        <td className="px-4 py-2.5 text-right text-red-500 font-medium">
+                        <td className="px-4 py-2.5 text-right text-red-500 dark:text-red-400 font-medium">
                           {item.saidas > 0 ? formatCurrency(item.saidas) : '—'}
                         </td>
-                        <td className="px-4 py-2.5 text-right text-red-300">
+                        <td className="px-4 py-2.5 text-right text-red-300 dark:text-red-600">
                           {item.saidasPrevistas > 0 ? formatCurrency(item.saidasPrevistas) : '—'}
                         </td>
-                        <td className={`px-4 py-2.5 text-right font-medium ${item.saldoDia >= 0 ? 'text-blue-600' : 'text-orange-500'}`}>
+                        <td className={`px-4 py-2.5 text-right font-medium ${item.saldoDia >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-500 dark:text-orange-400'}`}>
                           {formatCurrency(item.saldoDia)}
                         </td>
-                        <td className="px-4 py-2.5 text-right text-gray-500">
+                        <td className="px-4 py-2.5 text-right text-gray-500 dark:text-gray-400">
                           {formatCurrency(item.saldoAcumulado)}
                         </td>
                         <td className="px-4 py-2.5 text-center">
@@ -186,12 +188,14 @@ export default function ConciliacaoPage() {
 
 function SummaryCard({ label, value, color }: { label: string; value: number; color: string }) {
   const colors: Record<string, string> = {
-    green: 'text-green-600', red: 'text-red-500',
-    blue: 'text-blue-600', orange: 'text-orange-500',
+    green: 'text-green-600 dark:text-green-400',
+    red: 'text-red-500 dark:text-red-400',
+    blue: 'text-blue-600 dark:text-blue-400',
+    orange: 'text-orange-500 dark:text-orange-400',
   }
   return (
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4">
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
       <p className={`text-lg font-bold ${colors[color]}`}>{formatCurrency(value)}</p>
     </div>
   )

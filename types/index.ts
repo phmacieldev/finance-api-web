@@ -118,6 +118,7 @@ export interface DreLinha {
   label: string
   valor: number
   ehSubtotal: boolean
+  categorias: string[]
 }
 
 export interface Dre {

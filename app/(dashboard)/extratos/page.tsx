@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import {
   Upload, X, FileText, FileSpreadsheet, Pencil,
   AlertTriangle, XCircle, CheckCircle2, Trash2, Filter
@@ -11,7 +11,7 @@ import { formatCurrency, formatDate, monthName } from '@/lib/utils'
 import { useMesSelecionado } from '@/hooks/useMesSelecionado'
 import { MonthNav } from '@/components/MonthNav'
 import { useToast } from '@/components/Toast'
-import type { Extrato, Categoria, ExtratoImportResult, PageResponse, ContaBancaria } from '@/types'
+import type { Extrato, Categoria, ExtratoImportResult, PageResponse, ContaBancaria, Dashboard } from '@/types'
 
 const ACCEPTED = '.csv,.xlsx,.xls'
 
@@ -52,7 +52,7 @@ function ImportacaoModal({
         {/* Header */}
         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Resultado da Importação</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Resultado da Importação</h2>
             <p className="text-sm text-gray-500 mt-0.5">Revise o que foi processado antes de confirmar</p>
           </div>
           <button
@@ -191,7 +191,7 @@ function DetalheItem({ color, icon, children }: {
 
 interface SaldoAnteriorData { id?: string; mes: number; ano: number; valor: number }
 
-function SaldoAnteriorCard({ mes, ano }: { mes: number; ano: number }) {
+function SaldoAnteriorCard({ mes, ano, fechamentoMesAnterior }: { mes: number; ano: number; fechamentoMesAnterior?: number }) {
   const qc = useQueryClient()
   const [editing, setEditing] = useState(false)
   const [inputVal, setInputVal] = useState('')
@@ -257,7 +257,7 @@ function SaldoAnteriorCard({ mes, ano }: { mes: number; ano: number }) {
           </div>
         ) : (
           <div className="flex items-center gap-2 group/saldo">
-            <span className={`text-xl font-bold ${valor >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
+            <span className={`text-xl font-bold ${valor >= 0 ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'}`}>
               {formatCurrency(valor)}
             </span>
             <button
@@ -270,9 +270,25 @@ function SaldoAnteriorCard({ mes, ano }: { mes: number; ano: number }) {
           </div>
         )}
       </div>
-      <p className="text-xs text-gray-400 text-right hidden sm:block">
-        Saldo da conta<br />no início do mês
-      </p>
+      <div className="text-right hidden sm:block">
+        <p className="text-xs text-gray-400">Saldo da conta<br />no início do mês</p>
+        {fechamentoMesAnterior !== undefined && (
+          <div className="mt-2 text-right">
+            <p className="text-xs text-gray-400 dark:text-gray-500">Fechamento mês anterior</p>
+            <p className={`text-sm font-semibold ${fechamentoMesAnterior >= 0 ? 'text-gray-700 dark:text-gray-200' : 'text-red-600 dark:text-red-400'}`}>
+              {formatCurrency(fechamentoMesAnterior)}
+            </p>
+            {(data?.valor ?? 0) === 0 && (
+              <button
+                onClick={() => salvar(fechamentoMesAnterior)}
+                className="mt-1 text-xs text-blue-500 hover:text-blue-700 hover:underline"
+              >
+                Usar como saldo inicial
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -381,9 +397,9 @@ function CategoriaCell({
       <button
         onClick={() => setEditing(true)}
         title="Editar categoria"
-        className="opacity-0 group-hover/cat:opacity-100 p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-500 transition-all flex-shrink-0"
+        className="opacity-0 group-hover/cat:opacity-100 p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-600 text-gray-400 hover:text-blue-500 transition-all flex-shrink-0"
       >
-        <Pencil className="w-3 h-3" />
+        <Pencil className="w-3.5 h-3.5" />
       </button>
     </div>
   )
@@ -460,9 +476,9 @@ function ContaCell({
       <button
         onClick={() => setEditing(true)}
         title="Editar conta"
-        className="opacity-0 group-hover/conta:opacity-100 p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-500 transition-all flex-shrink-0"
+        className="opacity-0 group-hover/conta:opacity-100 p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-600 text-gray-400 hover:text-blue-500 transition-all flex-shrink-0"
       >
-        <Pencil className="w-3 h-3" />
+        <Pencil className="w-3.5 h-3.5" />
       </button>
     </div>
   )
@@ -512,9 +528,10 @@ export default function ExtratosPage() {
   if (filtroTipo) params.set('tipo', filtroTipo)
   if (filtroConta) params.set('contaBancariaId', filtroConta)
 
-  const { data: pageData, isLoading } = useQuery({
+  const { data: pageData, isLoading, isFetching } = useQuery({
     queryKey: ['extratos', mes, ano, page, filtroCategoria, filtroTipo, filtroConta],
     queryFn: () => api.get<PageResponse<Extrato>>(`/extratos?${params}`).then((r) => r.data),
+    placeholderData: keepPreviousData,
   })
   const extratos = pageData?.content ?? []
   const totalPages = pageData?.totalPages ?? 1
@@ -534,6 +551,22 @@ export default function ExtratosPage() {
     queryKey: ['saldo-anterior', mes, ano],
     queryFn: () =>
       api.get<SaldoAnteriorData>(`/saldo-anterior?mes=${mes}&ano=${ano}`).then((r) => r.data),
+  })
+
+  const { data: dashboardData } = useQuery<Dashboard>({
+    queryKey: ['dashboard', mes, ano],
+    queryFn: () => api.get<Dashboard>(`/dashboard?mes=${mes}&ano=${ano}`).then(r => r.data),
+  })
+
+  const hoje = new Date()
+  const isCurrentMonth = mes === hoje.getMonth() + 1 && ano === hoje.getFullYear()
+  const mesPrev = mes === 1 ? 12 : mes - 1
+  const anoPrev = mes === 1 ? ano - 1 : ano
+
+  const { data: dashboardMesAnterior } = useQuery<Dashboard>({
+    queryKey: ['dashboard', mesPrev, anoPrev],
+    queryFn: () => api.get<Dashboard>(`/dashboard?mes=${mesPrev}&ano=${anoPrev}`).then(r => r.data),
+    enabled: isCurrentMonth,
   })
 
   const { mutate: importar, isPending: importing } = useMutation({
@@ -685,6 +718,20 @@ export default function ExtratosPage() {
     }
   }
 
+  async function deletarSelecionados() {
+    if (selectedIds.size === 0) return
+    setApplyingBulk(true)
+    try {
+      await Promise.all([...selectedIds].map(id => api.delete(`/extratos/${id}`)))
+      qc.invalidateQueries({ queryKey: ['extratos'] })
+      qc.invalidateQueries({ queryKey: ['sem-categoria'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+      setSelectedIds(new Set())
+    } finally {
+      setApplyingBulk(false)
+    }
+  }
+
   async function applyBulkConta() {
     if (!bulkConta || selectedIds.size === 0) return
     setApplyingBulk(true)
@@ -700,18 +747,16 @@ export default function ExtratosPage() {
     }
   }
 
-  // Totais calculados sobre todos os itens da página atual
-  const totalEntradas = extratos.filter((e) => e.valor > 0).reduce((s, e) => s + e.valor, 0)
-  const totalSaidas = extratos.filter((e) => e.valor < 0).reduce((s, e) => s + Math.abs(e.valor), 0)
-  const saldoAnterior = saldoAnteriorData?.valor ?? 0
-  const saldoAtual = saldoAnterior + totalEntradas - totalSaidas
+  const totalEntradas = dashboardData?.totalEntradas ?? 0
+  const totalSaidas = dashboardData?.totalSaidas ?? 0
+  const saldoAtual = dashboardData?.saldoAtual ?? 0
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Extratos</h1>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Extratos</h1>
           <p className="text-sm text-gray-500 mt-0.5">Importe extratos bancários em CSV ou Excel</p>
         </div>
         <div className="flex items-center gap-3">
@@ -775,9 +820,50 @@ export default function ExtratosPage() {
         )}
       </div>
 
-      {/* Barra de ação em massa */}
+      {/* Saldo Anterior */}
+      <div className="mb-4">
+        <SaldoAnteriorCard
+          mes={mes}
+          ano={ano}
+          fechamentoMesAnterior={isCurrentMonth ? dashboardMesAnterior?.saldoAtual : undefined}
+        />
+      </div>
+
+      {/* Resumo */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4">
+          <p className="text-xs text-gray-500">Entradas no mês</p>
+          <p className="text-lg font-bold text-green-600">{formatCurrency(totalEntradas)}</p>
+        </div>
+        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4">
+          <p className="text-xs text-gray-500">Saídas no mês</p>
+          <p className="text-lg font-bold text-red-500">{formatCurrency(totalSaidas)}</p>
+        </div>
+        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4">
+          <p className="text-xs text-gray-500">Saldo atual</p>
+          <p className={`text-lg font-bold ${saldoAtual >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+            {formatCurrency(saldoAtual)}
+          </p>
+          <p className="text-xs text-gray-400 mt-0.5">saldo anterior + entradas − saídas</p>
+        </div>
+      </div>
+
+      {/* Modal de resultado da importação */}
+      {importMsg && (
+        <ImportacaoModal
+          resultado={importMsg}
+          onConfirmar={() => setImportMsg(null)}
+          onEditar={() => setImportMsg(null)}
+          onCancelarLote={() => {
+            setImportMsg(null)
+            qc.invalidateQueries({ queryKey: ['extratos'] })
+          }}
+        />
+      )}
+
+      {/* Barra de ação em massa — logo acima da tabela */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 mb-4 px-4 py-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl flex-wrap">
+        <div className="flex items-center gap-3 mb-2 px-4 py-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl flex-wrap">
           <span className="text-sm font-medium text-blue-700 dark:text-blue-300 whitespace-nowrap">
             {selectedIds.size} selecionado{selectedIds.size !== 1 ? 's' : ''}
           </span>
@@ -820,6 +906,15 @@ export default function ExtratosPage() {
               {applyingBulk ? '...' : 'Aplicar'}
             </button>
           </div>
+          <div className="w-px h-5 bg-blue-200 dark:bg-blue-700 mx-1" />
+          <button
+            onClick={deletarSelecionados}
+            disabled={applyingBulk}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-red-600 hover:bg-red-500 disabled:opacity-40 text-white rounded-lg transition-colors whitespace-nowrap"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Excluir selecionados
+          </button>
           <button
             onClick={() => setSelectedIds(new Set())}
             className="ml-auto text-xs text-blue-500 hover:text-blue-700 hover:underline whitespace-nowrap"
@@ -827,43 +922,6 @@ export default function ExtratosPage() {
             Limpar seleção
           </button>
         </div>
-      )}
-
-      {/* Saldo Anterior */}
-      <div className="mb-4">
-        <SaldoAnteriorCard mes={mes} ano={ano} />
-      </div>
-
-      {/* Resumo */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4">
-          <p className="text-xs text-gray-500">Entradas no mês</p>
-          <p className="text-lg font-bold text-green-600">{formatCurrency(totalEntradas)}</p>
-        </div>
-        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4">
-          <p className="text-xs text-gray-500">Saídas no mês</p>
-          <p className="text-lg font-bold text-red-500">{formatCurrency(totalSaidas)}</p>
-        </div>
-        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4">
-          <p className="text-xs text-gray-500">Saldo atual</p>
-          <p className={`text-lg font-bold ${saldoAtual >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-            {formatCurrency(saldoAtual)}
-          </p>
-          <p className="text-xs text-gray-400 mt-0.5">anterior + entradas − saídas</p>
-        </div>
-      </div>
-
-      {/* Modal de resultado da importação */}
-      {importMsg && (
-        <ImportacaoModal
-          resultado={importMsg}
-          onConfirmar={() => setImportMsg(null)}
-          onEditar={() => setImportMsg(null)}
-          onCancelarLote={() => {
-            setImportMsg(null)
-            qc.invalidateQueries({ queryKey: ['extratos'] })
-          }}
-        />
       )}
 
       {/* Tabela */}
@@ -992,9 +1050,10 @@ export default function ExtratosPage() {
             </table>
           </div>
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-              <span className="text-sm text-gray-500">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-slate-700">
+              <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                 Página {page + 1} de {totalPages}
+                {isFetching && <span className="w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin inline-block" />}
               </span>
               <div className="flex gap-2">
                 <button
@@ -1023,7 +1082,7 @@ export default function ExtratosPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-sm shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">Importar Extrato</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Importar Extrato</h3>
               <button onClick={() => { setShowImport(false); setSelectedFile(null); setShowNewConta(false) }}>
                 <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
               </button>
@@ -1043,13 +1102,13 @@ export default function ExtratosPage() {
               {selectedFile ? (
                 <>
                   <FileIcon file={selectedFile} />
-                  <p className="text-sm font-medium text-gray-800">{selectedFile.name}</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{selectedFile.name}</p>
                   <p className="text-xs text-gray-400 mt-1">{(selectedFile.size / 1024).toFixed(1)} KB</p>
                 </>
               ) : (
                 <>
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-600 font-medium">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
                     {dragging ? 'Solte o arquivo aqui' : 'Arraste ou clique para selecionar'}
                   </p>
                   <p className="text-xs text-gray-400 mt-1">CSV · XLSX · XLS · max 10MB</p>
@@ -1131,7 +1190,7 @@ export default function ExtratosPage() {
             <div className="flex gap-3 mt-5">
               <button
                 onClick={() => { setShowImport(false); setSelectedFile(null); setShowNewConta(false) }}
-                className="flex-1 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50"
+                className="flex-1 py-2 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700"
               >
                 Cancelar
               </button>

@@ -82,8 +82,8 @@ export default function CategoriasPage() {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Categorias</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Organize lançamentos por departamento</p>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Categorias</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Organize lançamentos por departamento</p>
         </div>
         <button
           onClick={() => setOpen(true)}
@@ -100,7 +100,9 @@ export default function CategoriasPage() {
             key={f}
             onClick={() => setFilter2(f)}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              filter === f ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+              filter === f
+                ? 'bg-blue-600 text-white'
+                : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'
             }`}
           >
             {f === 'ALL' ? 'Todas' : f === 'RECEITA' ? 'Receita' : 'Despesa'}
@@ -126,7 +128,7 @@ export default function CategoriasPage() {
             {paginadas.map((c) => (
               <div key={c.id} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 flex items-start justify-between group">
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-900 truncate">{c.name}</p>
+                  <p className="font-medium text-gray-900 dark:text-white truncate">{c.name}</p>
                   <div className="flex items-center gap-2 mt-1.5">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                       c.tipo === 'RECEITA' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
@@ -134,7 +136,7 @@ export default function CategoriasPage() {
                       {c.tipo === 'RECEITA' ? 'Receita' : 'Despesa'}
                     </span>
                     {c.dreCategoria && (
-                      <span className="text-xs text-slate-500">{DRE_LABELS[c.dreCategoria] ?? c.dreCategoria}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{DRE_LABELS[c.dreCategoria] ?? c.dreCategoria}</span>
                     )}
                   </div>
                 </div>
@@ -149,20 +151,20 @@ export default function CategoriasPage() {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-              <span className="text-sm text-gray-500">Página {page + 1} de {totalPages}</span>
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-slate-700">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Página {page + 1} de {totalPages}</span>
               <div className="flex gap-2">
                 <button
                   disabled={page === 0}
                   onClick={() => setPage(p => p - 1)}
-                  className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                  className="px-3 py-1.5 text-sm border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   Anterior
                 </button>
                 <button
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage(p => p + 1)}
-                  className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                  className="px-3 py-1.5 text-sm border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   Próxima
                 </button>
@@ -175,34 +177,34 @@ export default function CategoriasPage() {
       {/* Modal */}
       {open && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-xl">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-sm shadow-xl">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-semibold text-gray-900">Nova Categoria</h3>
-              <button onClick={() => { setOpen(false); reset() }}><X className="w-5 h-5 text-gray-400" /></button>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Nova Categoria</h3>
+              <button onClick={() => { setOpen(false); reset() }}><X className="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" /></button>
             </div>
 
             <form onSubmit={handleSubmit((d) => criar(d))} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Nome</label>
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Nome</label>
                 <input
                   {...register('name')}
                   placeholder="Ex: Folha de Pagamento"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
                 />
                 {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Tipo</label>
-                <select {...register('tipo')} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
+                <select {...register('tipo')} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500">
                   <option value="DESPESA">Despesa</option>
                   <option value="RECEITA">Receita</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Linha do DRE <span className="text-gray-400">(opcional)</span></label>
-                <select {...register('dreCategoria')} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Linha do DRE <span className="text-gray-400">(opcional)</span></label>
+                <select {...register('dreCategoria')} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500">
                   <option value="">— não mapeado</option>
                   {DRE_CATEGORIAS.map((d) => (
                     <option key={d} value={d}>{DRE_LABELS[d] ?? d}</option>
@@ -214,7 +216,7 @@ export default function CategoriasPage() {
                 <button
                   type="button"
                   onClick={() => { setOpen(false); reset() }}
-                  className="flex-1 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50"
+                  className="flex-1 py-2 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700"
                 >Cancelar</button>
                 <button
                   type="submit"

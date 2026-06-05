@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { removeToken, getRefreshToken } from '@/lib/auth'
 import { clearMesSelecionado, useMesSelecionado } from '@/hooks/useMesSelecionado'
 import { useTheme } from '@/components/theme'
+import { ToastProvider } from '@/components/Toast'
 import { cn } from '@/lib/utils'
 import api from '@/lib/api'
 import { queryClient } from '@/lib/queryClient'
@@ -70,6 +71,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
+    <ToastProvider>
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
       <aside className="w-60 flex-shrink-0 bg-slate-900 flex flex-col">
@@ -157,5 +159,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {children}
       </main>
     </div>
+    </ToastProvider>
   )
 }
