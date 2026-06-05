@@ -4,7 +4,6 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import api from '@/lib/api'
-import { saveToken, saveRefreshToken } from '@/lib/auth'
 
 function VerificarEmailContent() {
   const params = useSearchParams()
@@ -18,10 +17,7 @@ function VerificarEmailContent() {
     if (!token) { setStatus('error'); setMsg('Token inválido ou ausente.'); return }
 
     api.get(`/auth/verificar-email?token=${token}`)
-      .then(r => {
-        const data = r.data as { token?: string; refreshToken?: string }
-        if (data.token) saveToken(data.token)
-        if (data.refreshToken) saveRefreshToken(data.refreshToken)
+      .then(() => {
         setStatus('success')
         setTimeout(() => router.push('/dashboard'), 2500)
       })
