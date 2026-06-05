@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { CheckCircle2, XCircle } from 'lucide-react'
 import api from '@/lib/api'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useMesSelecionado } from '@/hooks/useMesSelecionado'
@@ -23,6 +24,18 @@ export default function ConciliacaoPage() {
   const [modo, setModo] = useState<'mensal' | 'periodo'>('mensal')
   const [inicio, setInicio] = useState('')
   const [fim, setFim] = useState('')
+  const [saldoInput, setSaldoInput] = useState('')
+
+  const storageKey = `saldo_banco_${mes}_${ano}`
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (saved) setSaldoInput(saved)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    else setSaldoInput('')
+  }, [storageKey])
 
   const queryKey = modo === 'mensal'
     ? ['conciliacao', mes, ano]
@@ -90,10 +103,69 @@ export default function ConciliacaoPage() {
         )}
       </div>
 
+      {/* Saldo bancário informado */}
+      <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 mb-6 flex items-center gap-4 flex-wrap">
+        <div className="flex-1 min-w-48">
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Saldo atual no banco (informado)</label>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">R$</span>
+            <input
+              type="text"
+              value={saldoInput}
+              onChange={e => {
+                setSaldoInput(e.target.value)
+                localStorage.setItem(storageKey, e.target.value)
+              }}
+              placeholder="0,00"
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg text-sm focus:outline-none focus:border-blue-400"
+            />
+          </div>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Digite o saldo que aparece no extrato do banco para verificar a conciliação</p>
+        </div>
+      </div>
+
       {isLoading ? (
         <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>
       ) : !data ? null : (
         <>
+          {/* Status de conciliação */}
+          {saldoInput !== '' && (() => {
+            const saldoBanco = parseFloat(saldoInput.replace(/\./g, '').replace(',', '.'))
+            if (isNaN(saldoBanco)) return null
+            const saldoSistema = data.saldoPeriodo
+            const diferenca = saldoBanco - saldoSistema
+            const conciliado = Math.abs(diferenca) < 0.02
+            return (
+              <div className={`flex items-center justify-between gap-4 px-5 py-4 rounded-xl border mb-6 ${
+                conciliado
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
+                  : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700'
+              }`}>
+                <div className="flex items-center gap-3">
+                  {conciliado
+                    ? <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0" />
+                    : <XCircle className="w-6 h-6 text-red-500 dark:text-red-400 flex-shrink-0" />}
+                  <div>
+                    <p className={`font-semibold text-sm ${conciliado ? 'text-green-800 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                      {conciliado ? 'Conciliado ✓' : 'Não conciliado ✗'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Banco: <strong>{formatCurrency(saldoBanco)}</strong> · Sistema: <strong>{formatCurrency(saldoSistema)}</strong>
+                    </p>
+                  </div>
+                </div>
+                {!conciliado && (
+                  <div className="text-right">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">Diferença</p>
+                    <p className={`text-lg font-bold ${diferenca > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                      {diferenca > 0 ? '+' : ''}{formatCurrency(Math.abs(diferenca))}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+
           {/* Summary Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <SummaryCard label="Entradas Realizadas" value={data.totalEntradas} color="green" />

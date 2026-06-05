@@ -114,11 +114,16 @@ export interface ConciliacaoPeriodo {
   itensDiarios: ConciliacaoItem[]
 }
 
+export interface DreCategoriaTotalDTO {
+  nome: string
+  valor: number
+}
+
 export interface DreLinha {
   label: string
   valor: number
   ehSubtotal: boolean
-  categorias: string[]
+  categorias: DreCategoriaTotalDTO[]
 }
 
 export interface Dre {

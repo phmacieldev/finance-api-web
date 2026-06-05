@@ -10,9 +10,9 @@ import api from '@/lib/api'
 import type { User, CompanyRole } from '@/types'
 
 const ROLE_META: Record<CompanyRole, { label: string; desc: string; color: string; icon: React.ReactNode }> = {
-  CEO:   { label: 'CEO',        desc: 'Dono — acesso total',         color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',  icon: <Crown  className="w-3 h-3" /> },
-  OWNER: { label: 'Operador',   desc: 'Operador — gerencia tudo exceto CEO', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300', icon: <Shield className="w-3 h-3" /> },
-  USER:  { label: 'Visualizador', desc: 'Leitura — dashboard, DRE e relatório', color: 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300', icon: <UserIcon className="w-3 h-3" /> },
+  CEO:   { label: 'Owner',      desc: 'Dono — acesso total',         color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',  icon: <Crown  className="w-3 h-3" /> },
+  OWNER: { label: 'Operador',   desc: 'Operador — gerencia tudo exceto Owner', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300', icon: <Shield className="w-3 h-3" /> },
+  USER:  { label: 'Visualizador', desc: 'Leitura — dashboard, DRE e relatório', color: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300', icon: <UserIcon className="w-3 h-3" /> },
 }
 
 const inviteSchema = z.object({
@@ -78,8 +78,8 @@ export default function UsuariosPage() {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Usuários</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Gerencie os membros da empresa</p>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Usuários</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Gerencie os membros da empresa</p>
         </div>
         {canManage && (
           <button
@@ -127,7 +127,7 @@ export default function UsuariosPage() {
                 const meta = ROLE_META[u.role as CompanyRole] ?? ROLE_META['USER']
                 return (
                   <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/40 group">
-                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
                           <UserIcon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
