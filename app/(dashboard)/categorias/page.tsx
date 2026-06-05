@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, X, Trash2 } from 'lucide-react'
+import { Plus, X, Trash2, Tag } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -10,6 +10,8 @@ import api from '@/lib/api'
 import type { Categoria } from '@/types'
 import { DRE_CATEGORIAS } from '@/types'
 import { useToast } from '@/components/Toast'
+import { EmptyState } from '@/components/EmptyState'
+import { TableSkeleton } from '@/components/TableSkeleton'
 
 const PAGE_SIZE = 12
 
@@ -114,14 +116,14 @@ export default function CategoriasPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-        </div>
+        <TableSkeleton rows={6} cols={3} />
       ) : paginadas.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <p className="font-medium">Nenhuma categoria</p>
-          <p className="text-sm mt-1">Crie sua primeira categoria acima</p>
-        </div>
+        <EmptyState
+          icon={Tag}
+          title="Nenhuma categoria encontrada"
+          description="Crie categorias para organizar suas receitas e despesas no DRE."
+          action={{ label: 'Criar categoria', onClick: () => setOpen(true) }}
+        />
       ) : (
         <>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">

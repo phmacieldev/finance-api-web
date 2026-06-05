@@ -6,6 +6,7 @@ import {
   Upload, X, FileText, FileSpreadsheet, Pencil, Plus,
   AlertTriangle, XCircle, CheckCircle2, Trash2, Filter
 } from 'lucide-react'
+import { TableSkeleton } from '@/components/TableSkeleton'
 import api from '@/lib/api'
 import { formatCurrency, formatDate, monthName } from '@/lib/utils'
 import { useMesSelecionado } from '@/hooks/useMesSelecionado'
@@ -1104,9 +1105,7 @@ export default function ExtratosPage() {
       {/* Tabela */}
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center h-48">
-            <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          </div>
+          <TableSkeleton rows={8} cols={5} />
         ) : extratos.length === 0 ? (
           <div
             className={`flex flex-col items-center justify-center py-20 cursor-pointer border-2 border-dashed rounded-xl m-4 transition-colors ${
