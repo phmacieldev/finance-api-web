@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import {
   Upload, X, FileText, FileSpreadsheet, Pencil, Plus,
-  AlertTriangle, XCircle, CheckCircle2, Trash2, Filter, Download
+  AlertTriangle, XCircle, CheckCircle2, Trash2, Filter, Download, ChevronDown
 } from 'lucide-react'
 import { TableSkeleton } from '@/components/TableSkeleton'
 import api from '@/lib/api'
@@ -197,6 +197,7 @@ function SaldoAnteriorCard({ mes, ano, fechamentoMesAnterior }: { mes: number; a
   const [editing, setEditing] = useState(false)
   const [inputVal, setInputVal] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const autoApplied = useRef(false)
 
   const { data } = useQuery<SaldoAnteriorData>({
     queryKey: ['saldo-anterior', mes, ano],
@@ -211,6 +212,15 @@ function SaldoAnteriorCard({ mes, ano, fechamentoMesAnterior }: { mes: number; a
       setEditing(false)
     },
   })
+
+  // Auto-preenche com o fechamento do mês anterior quando o mês ainda não tem saldo definido
+  useEffect(() => {
+    if (autoApplied.current) return
+    if (data !== undefined && !data.id && fechamentoMesAnterior !== undefined && fechamentoMesAnterior !== 0) {
+      autoApplied.current = true
+      salvar(fechamentoMesAnterior)
+    }
+  }, [data, fechamentoMesAnterior, salvar])
 
   useEffect(() => {
     if (editing) inputRef.current?.focus()
@@ -660,6 +670,7 @@ export default function ExtratosPage() {
   const [showNovoLancamento, setShowNovoLancamento] = useState(false)
   const [editandoExtrato, setEditandoExtrato] = useState<Extrato | null>(null)
   const [exportingFmt, setExportingFmt] = useState<'csv' | 'xlsx' | null>(null)
+  const [showExportMenu, setShowExportMenu] = useState(false)
 
   const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1'
 
@@ -717,15 +728,12 @@ export default function ExtratosPage() {
     queryFn: () => api.get<Dashboard>(`/dashboard?mes=${mes}&ano=${ano}`).then(r => r.data),
   })
 
-  const hoje = new Date()
-  const isCurrentMonth = mes === hoje.getMonth() + 1 && ano === hoje.getFullYear()
   const mesPrev = mes === 1 ? 12 : mes - 1
   const anoPrev = mes === 1 ? ano - 1 : ano
 
   const { data: dashboardMesAnterior } = useQuery<Dashboard>({
     queryKey: ['dashboard', mesPrev, anoPrev],
     queryFn: () => api.get<Dashboard>(`/dashboard?mes=${mesPrev}&ano=${anoPrev}`).then(r => r.data),
-    enabled: isCurrentMonth,
   })
 
   const { mutate: importar, isPending: importing } = useMutation({
@@ -985,28 +993,53 @@ export default function ExtratosPage() {
         </div>
         <div className="flex items-center gap-2">
           <MonthNav nav={nav} />
-          <button
-            onClick={() => exportar('csv')}
-            disabled={!!exportingFmt}
-            title="Exportar CSV"
-            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
-          >
-            {exportingFmt === 'csv'
-              ? <div className="w-3.5 h-3.5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-              : <FileText className="w-3.5 h-3.5" />}
-            CSV
-          </button>
-          <button
-            onClick={() => exportar('xlsx')}
-            disabled={!!exportingFmt}
-            title="Exportar Excel"
-            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
-          >
-            {exportingFmt === 'xlsx'
-              ? <div className="w-3.5 h-3.5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-              : <FileSpreadsheet className="w-3.5 h-3.5 text-green-600" />}
-            Excel
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(v => !v)}
+              disabled={!!exportingFmt}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+            >
+              {exportingFmt
+                ? <div className="w-3.5 h-3.5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                : <Download className="w-3.5 h-3.5" />}
+              Exportar
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showExportMenu ? 'rotate-180' : ''}`} />
+            </button>
+            {showExportMenu && (
+              <>
+                <div className="fixed inset-0 z-[9]" onClick={() => setShowExportMenu(false)} />
+                <div className="absolute right-0 top-full mt-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl z-10 overflow-hidden min-w-44">
+                  <p className="px-3 pt-2.5 pb-1 text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
+                    Formato
+                  </p>
+                  <button
+                    onClick={() => { exportar('csv'); setShowExportMenu(false) }}
+                    className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-4 h-4 text-blue-500" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium leading-tight">CSV</p>
+                      <p className="text-xs text-gray-400 dark:text-slate-500">Compatível com qualquer editor</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => { exportar('xlsx'); setShowExportMenu(false) }}
+                    className="flex items-center gap-3 w-full px-3 py-2.5 pb-3 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-green-50 dark:bg-green-950/60 flex items-center justify-center flex-shrink-0">
+                      <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium leading-tight">Excel</p>
+                      <p className="text-xs text-gray-400 dark:text-slate-500">Planilha .xlsx formatada</p>
+                    </div>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <button
             onClick={() => setShowNovoLancamento(true)}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition-colors"
@@ -1075,9 +1108,10 @@ export default function ExtratosPage() {
       {/* Saldo Anterior */}
       <div className="mb-4">
         <SaldoAnteriorCard
+          key={`${mes}-${ano}`}
           mes={mes}
           ano={ano}
-          fechamentoMesAnterior={isCurrentMonth ? dashboardMesAnterior?.saldoAtual : undefined}
+          fechamentoMesAnterior={dashboardMesAnterior?.saldoAtual}
         />
       </div>
 
