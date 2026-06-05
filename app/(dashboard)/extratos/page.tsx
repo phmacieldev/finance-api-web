@@ -653,6 +653,7 @@ export default function ExtratosPage() {
   const [newContaForm, setNewContaForm] = useState({ nome: '', banco: '', tipo: 'CORRENTE' })
   const [savingConta, setSavingConta] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [selectedValores, setSelectedValores] = useState<Map<string, number>>(new Map())
   const [bulkCategoria, setBulkCategoria] = useState('')
   const [bulkConta, setBulkConta] = useState('')
   const [applyingBulk, setApplyingBulk] = useState(false)
@@ -685,7 +686,7 @@ export default function ExtratosPage() {
 
   // Reset page and selection when filters/month change
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setPage(0); setSelectedIds(new Set()) }, [mes, ano, filtroCategoria, filtroTipo, filtroConta])
+  useEffect(() => { setPage(0); setSelectedIds(new Set()); setSelectedValores(new Map()) }, [mes, ano, filtroCategoria, filtroTipo, filtroConta])
 
   const params = new URLSearchParams({ mes: String(mes), ano: String(ano), page: String(page), size: '50' })
   if (filtroCategoria) params.set('categoriaId', filtroCategoria)
@@ -880,6 +881,18 @@ export default function ExtratosPage() {
   const allPageIds = extratos.map(e => e.id)
   const allSelected = allPageIds.length > 0 && allPageIds.every(id => selectedIds.has(id))
 
+  const selectedValoresArr = [...selectedValores.values()]
+  const hasPositive = selectedValoresArr.some(v => v > 0)
+  const hasNegative = selectedValoresArr.some(v => v < 0)
+  const isMixedSelection = hasPositive && hasNegative
+  const categoriasParaBulk = isMixedSelection
+    ? []
+    : hasPositive
+      ? categorias.filter(c => c.tipo === 'RECEITA')
+      : hasNegative
+        ? categorias.filter(c => c.tipo === 'DESPESA')
+        : categorias
+
   function toggleSelectAll() {
     setSelectedIds(prev => {
       const next = new Set(prev)
@@ -887,13 +900,25 @@ export default function ExtratosPage() {
       else allPageIds.forEach(id => next.add(id))
       return next
     })
+    setSelectedValores(prev => {
+      const next = new Map(prev)
+      if (allSelected) allPageIds.forEach(id => next.delete(id))
+      else extratos.forEach(e => next.set(e.id, e.valor))
+      return next
+    })
   }
 
-  function toggleSelect(id: string) {
+  function toggleSelect(id: string, valor: number) {
     setSelectedIds(prev => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
       else next.add(id)
+      return next
+    })
+    setSelectedValores(prev => {
+      const next = new Map(prev)
+      if (next.has(id)) next.delete(id)
+      else next.set(id, valor)
       return next
     })
   }
@@ -908,6 +933,7 @@ export default function ExtratosPage() {
       qc.invalidateQueries({ queryKey: ['extratos'] })
       qc.invalidateQueries({ queryKey: ['sem-categoria'] })
       setSelectedIds(new Set())
+      setSelectedValores(new Map())
       setBulkCategoria('')
     } finally {
       setApplyingBulk(false)
@@ -923,6 +949,7 @@ export default function ExtratosPage() {
       qc.invalidateQueries({ queryKey: ['sem-categoria'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
       setSelectedIds(new Set())
+      setSelectedValores(new Map())
     } finally {
       setApplyingBulk(false)
     }
@@ -937,6 +964,7 @@ export default function ExtratosPage() {
       ))
       qc.invalidateQueries({ queryKey: ['extratos'] })
       setSelectedIds(new Set())
+      setSelectedValores(new Map())
       setBulkConta('')
     } finally {
       setApplyingBulk(false)
@@ -1092,25 +1120,36 @@ export default function ExtratosPage() {
             {selectedIds.size} selecionado{selectedIds.size !== 1 ? 's' : ''}
           </span>
           <div className="w-px h-5 bg-blue-200 dark:bg-blue-700 mx-1" />
-          <div className="flex items-center gap-2">
-            <select
-              value={bulkCategoria}
-              onChange={e => setBulkCategoria(e.target.value)}
-              className="text-sm border border-blue-300 dark:border-blue-700 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              <option value="">Aplicar categoria...</option>
-              {categorias.map(c => (
-                <option key={c.id} value={c.id}>{c.name} ({c.tipo === 'RECEITA' ? 'Receita' : 'Despesa'})</option>
-              ))}
-            </select>
-            <button
-              onClick={applyBulkCategoria}
-              disabled={!bulkCategoria || applyingBulk}
-              className="px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white rounded-lg transition-colors whitespace-nowrap"
-            >
-              {applyingBulk ? '...' : 'Aplicar'}
-            </button>
-          </div>
+          {isMixedSelection ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 rounded-lg">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+              <span className="text-xs text-amber-700 dark:text-amber-400 whitespace-nowrap">
+                Seleção mista (entradas e saídas) — não é possível aplicar categoria
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <select
+                value={bulkCategoria}
+                onChange={e => setBulkCategoria(e.target.value)}
+                className="text-sm border border-blue-300 dark:border-blue-700 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">
+                  {hasPositive ? 'Aplicar receita...' : hasNegative ? 'Aplicar despesa...' : 'Aplicar categoria...'}
+                </option>
+                {categoriasParaBulk.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={applyBulkCategoria}
+                disabled={!bulkCategoria || applyingBulk}
+                className="px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white rounded-lg transition-colors whitespace-nowrap"
+              >
+                {applyingBulk ? '...' : 'Aplicar'}
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <select
               value={bulkConta}
@@ -1140,7 +1179,7 @@ export default function ExtratosPage() {
             Excluir selecionados
           </button>
           <button
-            onClick={() => setSelectedIds(new Set())}
+            onClick={() => { setSelectedIds(new Set()); setSelectedValores(new Map()) }}
             className="ml-auto text-xs text-blue-500 hover:text-blue-700 hover:underline whitespace-nowrap"
           >
             Limpar seleção
@@ -1209,7 +1248,7 @@ export default function ExtratosPage() {
                       <input
                         type="checkbox"
                         checked={selectedIds.has(e.id)}
-                        onChange={() => toggleSelect(e.id)}
+                        onChange={() => toggleSelect(e.id, e.valor)}
                         className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer"
                       />
                     </td>
