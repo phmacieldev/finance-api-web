@@ -165,7 +165,8 @@ export interface User {
 export interface AdminEnterprise {
   id: string
   name: string
-  cnpj: string
+  cnpj: string | null
+  cpf: string | null
   plan: string
   status: 'PENDENTE' | 'ATIVA' | 'BLOQUEADA'
   createdAt: string
