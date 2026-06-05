@@ -1,3 +1,10 @@
+export interface ApiError {
+  status: number
+  message: string
+  timestamp: string
+  campos?: Record<string, string>
+}
+
 export interface TokenResponseDTO {
   token: string | null
   type: string | null
