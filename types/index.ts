@@ -86,6 +86,7 @@ export interface Dashboard {
   totalSaidas: number
   saldoMes: number
   saldoAtual: number
+  saldoTotal: number
   totalEntradasMesAnterior: number
   totalSaidasMesAnterior: number
   variacaoEntradas: number
@@ -94,6 +95,7 @@ export interface Dashboard {
   fluxoDiario: FluxoDiario[]
   topDespesas: TopCategoria[]
   topReceitas: TopCategoria[]
+  ultimosLancamentos: Extrato[]
 }
 
 export interface ConciliacaoItem {
