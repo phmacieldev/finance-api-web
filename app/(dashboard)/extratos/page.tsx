@@ -548,12 +548,6 @@ export default function ExtratosPage() {
     queryFn: () => api.get<ContaBancaria[]>('/contas-bancarias').then(r => r.data),
   })
 
-  const { data: saldoAnteriorData } = useQuery<SaldoAnteriorData>({
-    queryKey: ['saldo-anterior', mes, ano],
-    queryFn: () =>
-      api.get<SaldoAnteriorData>(`/saldo-anterior?mes=${mes}&ano=${ano}`).then((r) => r.data),
-  })
-
   const { data: dashboardData } = useQuery<Dashboard>({
     queryKey: ['dashboard', mes, ano],
     queryFn: () => api.get<Dashboard>(`/dashboard?mes=${mes}&ano=${ano}`).then(r => r.data),

@@ -128,7 +128,7 @@ export default function ContasPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Contas Bancárias</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Gerencie as contas para separar extratos por banco</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Gerencie as contas para separar extratos por banco</p>
         </div>
         <button
           onClick={() => setOpen(true)}

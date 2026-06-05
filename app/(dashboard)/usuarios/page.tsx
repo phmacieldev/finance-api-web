@@ -79,7 +79,7 @@ export default function UsuariosPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Usuários</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Gerencie os membros da empresa</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Gerencie os membros da empresa</p>
         </div>
         {canManage && (
           <button
