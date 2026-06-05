@@ -10,6 +10,7 @@ import api from '@/lib/api'
 import { formatCurrency, formatDate, monthName } from '@/lib/utils'
 import { useMesSelecionado } from '@/hooks/useMesSelecionado'
 import { MonthNav } from '@/components/MonthNav'
+import { useToast } from '@/components/Toast'
 import type { Extrato, Categoria, ExtratoImportResult, PageResponse, ContaBancaria, Dashboard } from '@/types'
 
 const ACCEPTED = '.csv,.xlsx,.xls'

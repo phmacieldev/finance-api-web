@@ -48,6 +48,7 @@ export default function PainelAdminPage() {
   const [showNovoAdmin, setShowNovoAdmin] = useState(false)
   const [novoAdminForm, setNovoAdminForm] = useState({ name: '', email: '', password: '' })
   const [novoAdminError, setNovoAdminError] = useState('')
+  const [confirmDeleteEmpresa, setConfirmDeleteEmpresa] = useState(false)
 
   const { data: empresas = [], isLoading } = useQuery<AdminEnterprise[]>({
     queryKey: ['admin-empresas', filtroStatus],
