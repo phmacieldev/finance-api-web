@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   CheckCircle2, XCircle, Clock, Building2, ChevronRight,
-  Crown, Shield, User as UserIcon, Trash2, ArrowLeft, CreditCard, Plus, X,
+  Crown, Shield, User as UserIcon, Trash2, ArrowLeft, CreditCard, Plus, X, ShieldCheck,
 } from 'lucide-react'
-
+import Link from 'next/link'
 import api from '@/lib/api'
 import type { AdminEnterprise, AdminUser, CompanyRole } from '@/types'
 
@@ -198,6 +198,12 @@ export default function PainelAdminPage() {
               {pendentes} pendente{pendentes !== 1 ? 's' : ''}
             </span>
           )}
+          <Link
+            href="/painel-admin/audit-log"
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 bg-white dark:bg-slate-800 text-sm font-medium rounded-lg transition-colors"
+          >
+            <ShieldCheck className="w-4 h-4" /> Audit Log
+          </Link>
           <button
             onClick={() => { setShowNovaEmpresa(true); setNovaEmpresaError('') }}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition-colors"

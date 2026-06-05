@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import {
   Upload, X, FileText, FileSpreadsheet, Pencil, Plus,
-  AlertTriangle, XCircle, CheckCircle2, Trash2, Filter
+  AlertTriangle, XCircle, CheckCircle2, Trash2, Filter, Download
 } from 'lucide-react'
 import { TableSkeleton } from '@/components/TableSkeleton'
 import api from '@/lib/api'
@@ -658,6 +658,30 @@ export default function ExtratosPage() {
   const [applyingBulk, setApplyingBulk] = useState(false)
   const [showNovoLancamento, setShowNovoLancamento] = useState(false)
   const [editandoExtrato, setEditandoExtrato] = useState<Extrato | null>(null)
+  const [exportingFmt, setExportingFmt] = useState<'csv' | 'xlsx' | null>(null)
+
+  const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1'
+
+  async function exportar(fmt: 'csv' | 'xlsx') {
+    setExportingFmt(fmt)
+    try {
+      const Cookies = (await import('js-cookie')).default
+      const token = Cookies.get('financeiro_token')
+      const url = `${API}/export/${fmt}?mes=${mes}&ano=${ano}`
+      const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      if (!res.ok) throw new Error()
+      const blob = await res.blob()
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `extratos_${String(mes).padStart(2, '0')}_${ano}.${fmt}`
+      a.click()
+      URL.revokeObjectURL(a.href)
+    } catch {
+      toast('Erro ao exportar. Verifique se há dados no período.')
+    } finally {
+      setExportingFmt(null)
+    }
+  }
 
   // Reset page and selection when filters/month change
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -931,8 +955,30 @@ export default function ExtratosPage() {
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Extratos</h1>
           <p className="text-sm text-gray-500 mt-0.5">Importe extratos bancários em CSV ou Excel</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <MonthNav nav={nav} />
+          <button
+            onClick={() => exportar('csv')}
+            disabled={!!exportingFmt}
+            title="Exportar CSV"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+          >
+            {exportingFmt === 'csv'
+              ? <div className="w-3.5 h-3.5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+              : <FileText className="w-3.5 h-3.5" />}
+            CSV
+          </button>
+          <button
+            onClick={() => exportar('xlsx')}
+            disabled={!!exportingFmt}
+            title="Exportar Excel"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+          >
+            {exportingFmt === 'xlsx'
+              ? <div className="w-3.5 h-3.5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+              : <FileSpreadsheet className="w-3.5 h-3.5 text-green-600" />}
+            Excel
+          </button>
           <button
             onClick={() => setShowNovoLancamento(true)}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition-colors"
