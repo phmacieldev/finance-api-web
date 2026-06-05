@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   CheckCircle2, XCircle, Clock, Building2, ChevronRight,
-  Crown, Shield, User as UserIcon, Trash2, ArrowLeft, CreditCard, Plus, X, ShieldCheck,
+  Crown, Shield, User as UserIcon, Trash2, ArrowLeft, CreditCard, Plus, X, ShieldCheck, Pencil,
 } from 'lucide-react'
 import Link from 'next/link'
 import api from '@/lib/api'
@@ -50,6 +50,9 @@ export default function PainelAdminPage() {
   const [novoAdminForm, setNovoAdminForm] = useState({ name: '', email: '', password: '' })
   const [novoAdminError, setNovoAdminError] = useState('')
   const [confirmDeleteEmpresa, setConfirmDeleteEmpresa] = useState(false)
+  const [editingEmpresaNome, setEditingEmpresaNome] = useState(false)
+  const [empresaNomeDraft, setEmpresaNomeDraft] = useState('')
+  const [editingUser, setEditingUser] = useState<{ id: string; name: string; email: string } | null>(null)
   const [showNovaEmpresa, setShowNovaEmpresa] = useState(false)
   const [novaEmpresaForm, setNovaEmpresaForm] = useState({
     name: '', tipoPessoa: 'JURIDICA' as 'JURIDICA' | 'FISICA', cnpj: '', cpf: '', plan: 'FREE',
@@ -102,6 +105,25 @@ export default function PainelAdminPage() {
       setConfirmDeleteEmpresa(false)
     },
   })
+  const { mutate: editarEmpresa, isPending: salvandoEmpresa } = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) =>
+      api.patch<AdminEnterprise>(`/admin/empresas/${id}`, { name }),
+    onSuccess: (_, { name }) => {
+      qc.invalidateQueries({ queryKey: ['admin-empresas'] })
+      setSelectedEmpresa(e => e ? { ...e, name } : e)
+      setEditingEmpresaNome(false)
+    },
+  })
+
+  const { mutate: editarUsuario, isPending: salvandoUsuario } = useMutation({
+    mutationFn: ({ id, name, email }: { id: string; name: string; email: string }) =>
+      api.patch(`/admin/empresas/${selectedEmpresa!.id}/usuarios/${id}`, { name, email }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-empresa-usuarios'] })
+      setEditingUser(null)
+    },
+  })
+
   const { mutate: alterarRole } = useMutation({
     mutationFn: ({ id, role }: { id: string; role: string }) =>
       api.patch(`/admin/empresas/${selectedEmpresa!.id}/usuarios/${id}`, { role }),
@@ -171,6 +193,8 @@ export default function PainelAdminPage() {
     setPlanDraft(e.plan)
     setEditingPlan(false)
     setEditingRole(null)
+    setEditingUser(null)
+    setEditingEmpresaNome(false)
     setConfirmDeleteUser(null)
     setShowAddUser(false)
     setAddUserError('')
@@ -402,7 +426,39 @@ export default function PainelAdminPage() {
           <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-5">
             <div className="flex items-start justify-between flex-wrap gap-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{selectedEmpresa.name}</h2>
+                {editingEmpresaNome ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={empresaNomeDraft}
+                      onChange={e => setEmpresaNomeDraft(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') editarEmpresa({ id: selectedEmpresa.id, name: empresaNomeDraft })
+                        if (e.key === 'Escape') setEditingEmpresaNome(false)
+                      }}
+                      autoFocus
+                      className="px-3 py-1.5 border border-blue-400 rounded-lg text-sm font-semibold text-gray-900 dark:text-gray-100 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-300 w-64"
+                    />
+                    <button
+                      onClick={() => editarEmpresa({ id: selectedEmpresa.id, name: empresaNomeDraft })}
+                      disabled={salvandoEmpresa || !empresaNomeDraft.trim()}
+                      className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg"
+                    >
+                      {salvandoEmpresa ? '...' : 'Salvar'}
+                    </button>
+                    <button onClick={() => setEditingEmpresaNome(false)} className="px-2 py-1.5 text-xs border border-gray-200 dark:border-slate-600 rounded-lg text-gray-500">Cancelar</button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 group/nome">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{selectedEmpresa.name}</h2>
+                    <button
+                      onClick={() => { setEmpresaNomeDraft(selectedEmpresa.name); setEditingEmpresaNome(true) }}
+                      className="opacity-0 group-hover/nome:opacity-100 p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 hover:text-blue-500 transition-all"
+                      title="Editar nome da empresa"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
                 <p className="text-sm text-gray-500 mt-0.5">CNPJ: {selectedEmpresa.cnpj} &middot; Cadastro: {formatDate(selectedEmpresa.createdAt)}</p>
               </div>
               <div className="flex gap-2 flex-wrap">
@@ -548,10 +604,28 @@ export default function PainelAdminPage() {
                 <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                   {usuariosEmpresa.map((u) => {
                     const meta = ROLE_META[u.role] ?? ROLE_META['USER']
+                    const isEditingThisUser = editingUser?.id === u.id
                     return (
-                      <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/40 group">
-                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{u.name}</td>
-                        <td className="px-4 py-3 text-gray-500">{u.email}</td>
+                      <tr key={u.id} className={`group ${isEditingThisUser ? 'bg-blue-50/50 dark:bg-blue-950/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/40'}`}>
+                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
+                          {isEditingThisUser ? (
+                            <input
+                              value={editingUser.name}
+                              onChange={e => setEditingUser(v => v ? { ...v, name: e.target.value } : v)}
+                              className="w-full px-2 py-1 text-sm border border-blue-400 rounded-lg dark:bg-slate-700 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                            />
+                          ) : u.name}
+                        </td>
+                        <td className="px-4 py-3 text-gray-500">
+                          {isEditingThisUser ? (
+                            <input
+                              value={editingUser.email}
+                              onChange={e => setEditingUser(v => v ? { ...v, email: e.target.value } : v)}
+                              type="email"
+                              className="w-full px-2 py-1 text-sm border border-blue-400 rounded-lg dark:bg-slate-700 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                            />
+                          ) : u.email}
+                        </td>
                         <td className="px-4 py-3">
                           {editingRole?.id === u.id ? (
                             <div className="flex items-center gap-2">
@@ -565,7 +639,7 @@ export default function PainelAdminPage() {
                               <button onClick={() => alterarRole(editingRole)}
                                 className="text-xs px-2 py-1 bg-blue-600 text-white rounded">Salvar</button>
                               <button onClick={() => setEditingRole(null)}
-                                className="text-xs px-2 py-1 border border-gray-200 rounded text-gray-500">Cancelar</button>
+                                className="text-xs px-2 py-1 border border-gray-200 dark:border-slate-600 rounded text-gray-500">Cancelar</button>
                             </div>
                           ) : (
                             <button onClick={() => setEditingRole({ id: u.id, role: u.role })}
@@ -575,18 +649,39 @@ export default function PainelAdminPage() {
                           )}
                         </td>
                         <td className="px-2 py-3">
-                          {confirmDeleteUser === u.id ? (
+                          {isEditingThisUser ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => editarUsuario({ id: u.id, name: editingUser.name, email: editingUser.email })}
+                                disabled={salvandoUsuario}
+                                className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded"
+                              >
+                                {salvandoUsuario ? '...' : 'Salvar'}
+                              </button>
+                              <button onClick={() => setEditingUser(null)}
+                                className="px-2 py-1 text-xs border border-gray-200 dark:border-slate-600 rounded text-gray-500">Cancelar</button>
+                            </div>
+                          ) : confirmDeleteUser === u.id ? (
                             <div className="flex items-center gap-1">
                               <button onClick={() => removerUser(u.id)}
                                 className="px-2 py-1 text-xs bg-red-500 text-white rounded">Confirmar</button>
                               <button onClick={() => setConfirmDeleteUser(null)}
-                                className="px-2 py-1 text-xs border border-gray-200 rounded text-gray-500">Cancelar</button>
+                                className="px-2 py-1 text-xs border border-gray-200 dark:border-slate-600 rounded text-gray-500">Cancelar</button>
                             </div>
                           ) : (
-                            <button onClick={() => setConfirmDeleteUser(u.id)}
-                              className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-300 hover:text-red-500 rounded transition-all">
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+                              <button
+                                onClick={() => { setEditingUser({ id: u.id, name: u.name, email: u.email }); setConfirmDeleteUser(null); setEditingRole(null) }}
+                                className="p-1.5 text-gray-300 hover:text-blue-500 rounded"
+                                title="Editar usuário"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button onClick={() => setConfirmDeleteUser(u.id)}
+                                className="p-1.5 text-gray-300 hover:text-red-500 rounded">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           )}
                         </td>
                       </tr>
