@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, X, Trash2, Landmark, ChevronDown } from 'lucide-react'
 import api from '@/lib/api'
 import type { ContaBancaria } from '@/types'
+import { EmptyState } from '@/components/EmptyState'
+import { TableSkeleton } from '@/components/TableSkeleton'
 
 const BANCOS_BR = [
   'Nubank', 'Itaú', 'Bradesco', 'Banco do Brasil', 'Caixa Econômica Federal',
@@ -139,15 +141,14 @@ export default function ContasPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-        </div>
+        <TableSkeleton rows={4} cols={3} />
       ) : contas.length === 0 ? (
-        <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-xl">
-          <Landmark className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="font-medium text-gray-500">Nenhuma conta cadastrada</p>
-          <p className="text-sm text-gray-400 mt-1">Adicione contas para separar extratos por banco</p>
-        </div>
+        <EmptyState
+          icon={Landmark}
+          title="Nenhuma conta cadastrada"
+          description="Adicione suas contas bancárias para separar e organizar seus lançamentos."
+          action={{ label: 'Adicionar conta', onClick: () => setOpen(true) }}
+        />
       ) : (
         <div className="space-y-3">
           {contas.map((c) => (
