@@ -79,9 +79,14 @@ api.interceptors.response.use(
       const newToken = await refreshing
       original.headers.Authorization = `Bearer ${newToken}`
       return api(original)
-    } catch {
-      removeToken()
-      window.location.href = '/login'
+    } catch (refreshError) {
+      refreshing = null
+      const status = (refreshError as AxiosError).response?.status
+      // Só desconecta se o backend rejeitou o token (401/403), não em erros de rede
+      if (status === 401 || status === 403) {
+        removeToken()
+        window.location.href = '/login'
+      }
       return Promise.reject(error)
     }
   },
