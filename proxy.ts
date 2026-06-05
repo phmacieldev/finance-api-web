@@ -1,19 +1,31 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const PUBLIC_PATHS = ['/login', '/register', '/verificar-email', '/verificar-pendente', '/esqueci-senha', '/resetar-senha']
+const PUBLIC_PATHS = [
+  '/login',
+  '/register',
+  '/verificar-email',
+  '/verificar-pendente',
+  '/esqueci-senha',
+  '/resetar-senha',
+]
 
 export function proxy(request: NextRequest) {
-  const token = request.cookies.get('financeiro_token')
-  const pathname = request.nextUrl.pathname
+  const { pathname } = request.nextUrl
 
-  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p))
+  const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/') || pathname.startsWith(p + '?'))
 
-  if (!token && !isPublic) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  const hasToken   = request.cookies.has('financeiro_token')
+  const hasRefresh = request.cookies.has('financeiro_refresh')
+  const isAuthenticated = hasToken || hasRefresh
+
+  if (!isAuthenticated && !isPublic) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('next', pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
-  if (token && isPublic) {
+  if (isAuthenticated && isPublic && pathname !== '/verificar-pendente') {
     return NextResponse.redirect(new URL('/', request.url))
   }
 

@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { removeToken, getRefreshToken } from '@/lib/auth'
 import { clearMesSelecionado, useMesSelecionado } from '@/hooks/useMesSelecionado'
 import { useTheme } from '@/components/theme'
 import { ToastProvider } from '@/components/Toast'
@@ -70,11 +69,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const semCatCount = semCatList.length
 
   async function logout() {
-    const refreshToken = getRefreshToken()
-    if (refreshToken) {
-      try { await api.post('/auth/logout', { refreshToken }) } catch { /* ignora erro de rede */ }
-    }
-    removeToken()
+    try { await api.post('/auth/logout') } catch { /* ignora erro de rede */ }
     clearMesSelecionado()
     queryClient.clear()
     router.push('/login')

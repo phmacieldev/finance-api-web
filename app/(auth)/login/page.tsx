@@ -8,7 +8,6 @@ import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import api from '@/lib/api'
-import { saveToken, saveRefreshToken } from '@/lib/auth'
 import { clearMesSelecionado } from '@/hooks/useMesSelecionado'
 import { queryClient } from '@/lib/queryClient'
 import type { TokenResponseDTO } from '@/types'
@@ -32,8 +31,6 @@ export default function LoginPage() {
       api.post<TokenResponseDTO>('/auth/login', data).then((r) => r.data),
     onSuccess: (data) => {
       queryClient.clear()
-      if (data.token) saveToken(data.token)
-      if (data.refreshToken) saveRefreshToken(data.refreshToken)
       clearMesSelecionado()
       router.push(data.role === 'PLATFORM_ADMIN' ? '/painel-admin' : '/dashboard')
     },

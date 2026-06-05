@@ -45,10 +45,8 @@ export default function ExportPage() {
     setDownloading(format)
     setDone(null)
     try {
-      const Cookies = (await import('js-cookie')).default
-      const token = Cookies.get('financeiro_token')
       const res = await fetch(buildUrl(format), {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include',
       })
       if (!res.ok) throw new Error('Erro ao exportar')
 
