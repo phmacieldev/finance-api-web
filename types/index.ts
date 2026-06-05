@@ -154,6 +154,14 @@ export interface PageResponse<T> {
 
 export type CompanyRole = 'CEO' | 'OWNER' | 'USER'
 
+export interface EmpresaResumo {
+  id: string
+  name: string
+  plan: string
+  role: string
+  ativa: boolean
+}
+
 export interface User {
   id: string
   name: string
