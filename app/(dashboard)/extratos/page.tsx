@@ -504,6 +504,7 @@ export default function ExtratosPage() {
   const [showImport, setShowImport] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [dragging, setDragging] = useState(false)
+  const [saldoBancarioImport, setSaldoBancarioImport] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const [page, setPage] = useState(0)
   const [filtroCategoria, setFiltroCategoria] = useState('')
@@ -585,7 +586,10 @@ export default function ExtratosPage() {
     onSuccess: (result) => {
       setSelectedFile(null)
       setShowImport(false)
-      // Atualiza a lista e abre o modal de conferência
+      if (saldoBancarioImport.trim()) {
+        localStorage.setItem(`saldo_banco_${mes}_${ano}`, saldoBancarioImport.trim())
+      }
+      setSaldoBancarioImport('')
       qc.invalidateQueries({ queryKey: ['extratos'] })
       setImportMsg(result)
     },
@@ -1180,6 +1184,21 @@ export default function ExtratosPage() {
                   ))}
                 </select>
               )}
+            </div>
+
+            <div className="mt-3">
+              <label className="block text-xs text-gray-500 mb-1">Saldo atual no banco (opcional)</label>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-400">R$</span>
+                <input
+                  type="text"
+                  value={saldoBancarioImport}
+                  onChange={e => setSaldoBancarioImport(e.target.value)}
+                  placeholder="0,00"
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg text-sm focus:outline-none focus:border-blue-400"
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Será usado na página de Conciliação para verificar divergências</p>
             </div>
 
             <p className="text-xs text-gray-400 mt-3 leading-relaxed">

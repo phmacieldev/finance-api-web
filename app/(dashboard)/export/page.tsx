@@ -14,8 +14,32 @@ export default function ExportPage() {
   const { mes, ano } = nav
   const [downloading, setDownloading] = useState<'csv' | 'xlsx' | null>(null)
   const [done, setDone] = useState<'csv' | 'xlsx' | null>(null)
+  const [modo, setModo] = useState<'mensal' | 'periodo'>('mensal')
+  const [mesInicio, setMesInicio] = useState(1)
+  const [anoInicio, setAnoInicio] = useState(currentAno())
+  const [mesFim, setMesFim] = useState(new Date().getMonth() + 1)
+  const [anoFim, setAnoFim] = useState(currentAno())
 
   const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1'
+
+  function buildUrl(format: 'csv' | 'xlsx') {
+    if (modo === 'periodo') {
+      const inicio = `${anoInicio}-${String(mesInicio).padStart(2, '0')}-01`
+      const lastDay = new Date(anoFim, mesFim, 0).getDate()
+      const fim = `${anoFim}-${String(mesFim).padStart(2, '0')}-${lastDay}`
+      return `${API}/export/${format}?inicio=${inicio}&fim=${fim}`
+    }
+    return `${API}/export/${format}?mes=${mes}&ano=${ano}`
+  }
+
+  function buildFilename(format: 'csv' | 'xlsx') {
+    if (modo === 'periodo') {
+      const inicio = `${anoInicio}-${String(mesInicio).padStart(2, '0')}`
+      const fim = `${anoFim}-${String(mesFim).padStart(2, '0')}`
+      return `relatorio_${inicio}_${fim}.${format}`
+    }
+    return `relatorio_${String(mes).padStart(2, '0')}_${ano}.${format}`
+  }
 
   async function download(format: 'csv' | 'xlsx') {
     setDownloading(format)
@@ -23,7 +47,7 @@ export default function ExportPage() {
     try {
       const Cookies = (await import('js-cookie')).default
       const token = Cookies.get('financeiro_token')
-      const res = await fetch(`${API}/export/${format}?mes=${mes}&ano=${ano}`, {
+      const res = await fetch(buildUrl(format), {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
       if (!res.ok) throw new Error('Erro ao exportar')
@@ -32,7 +56,7 @@ export default function ExportPage() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `relatorio_${String(mes).padStart(2, '0')}_${ano}.${format}`
+      a.download = buildFilename(format)
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -45,43 +69,105 @@ export default function ExportPage() {
     }
   }
 
+  const btnInactive = 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'
+
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Exportar Relatório</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Baixe o relatório mensal em CSV ou Excel</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Baixe o relatório em CSV ou Excel</p>
       </div>
 
       {/* Period Picker */}
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Período</h2>
-          <MonthNav nav={nav} />
+          {modo === 'mensal' && <MonthNav nav={nav} />}
         </div>
-        <div className="flex gap-4 mt-4">
-          <div className="flex-1">
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Mês</label>
-            <select
-              value={mes}
-              onChange={(e) => nav.setMes(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 capitalize"
-            >
-              {MESES.map((m) => (
-                <option key={m.value} value={m.value} className="capitalize">{m.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1">
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Ano</label>
-            <select
-              value={ano}
-              onChange={(e) => nav.setAno(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
-            >
-              {ANOS.map((a) => <option key={a} value={a}>{a}</option>)}
-            </select>
-          </div>
+
+        {/* Modo toggle */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setModo('mensal')}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${modo === 'mensal' ? 'bg-blue-600 text-white' : btnInactive}`}
+          >
+            Mensal
+          </button>
+          <button
+            onClick={() => setModo('periodo')}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${modo === 'periodo' ? 'bg-blue-600 text-white' : btnInactive}`}
+          >
+            Período customizado
+          </button>
         </div>
+
+        {modo === 'mensal' ? (
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Mês</label>
+              <select
+                value={mes}
+                onChange={(e) => nav.setMes(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 capitalize"
+              >
+                {MESES.map((m) => (
+                  <option key={m.value} value={m.value} className="capitalize">{m.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Ano</label>
+              <select
+                value={ano}
+                onChange={(e) => nav.setAno(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+              >
+                {ANOS.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">De</label>
+              <div className="flex gap-3">
+                <select
+                  value={mesInicio}
+                  onChange={e => setMesInicio(Number(e.target.value))}
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 capitalize"
+                >
+                  {MESES.map(m => <option key={m.value} value={m.value} className="capitalize">{m.label}</option>)}
+                </select>
+                <select
+                  value={anoInicio}
+                  onChange={e => setAnoInicio(Number(e.target.value))}
+                  className="w-24 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+                >
+                  {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Até</label>
+              <div className="flex gap-3">
+                <select
+                  value={mesFim}
+                  onChange={e => setMesFim(Number(e.target.value))}
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 capitalize"
+                >
+                  {MESES.map(m => <option key={m.value} value={m.value} className="capitalize">{m.label}</option>)}
+                </select>
+                <select
+                  value={anoFim}
+                  onChange={e => setAnoFim(Number(e.target.value))}
+                  className="w-24 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+                >
+                  {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Download Options */}
@@ -98,7 +184,7 @@ export default function ExportPage() {
         <ExportCard
           icon={<FileSpreadsheet className="w-8 h-8 text-green-500" />}
           title="Relatório Excel"
-          description="Planilha XLSX com aba de detalhe e resumo mensal formatado com totais e categorias."
+          description="Planilha XLSX com aba de detalhe e resumo do período formatado com totais e categorias."
           format="xlsx"
           loading={downloading === 'xlsx'}
           done={done === 'xlsx'}
@@ -110,10 +196,10 @@ export default function ExportPage() {
       <div className="mt-6 bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 rounded-xl p-4">
         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-2">O relatório inclui:</p>
         <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-          <li>• Todos os lançamentos do mês com data, tipo, razão social, valor e saldo</li>
+          <li>• Todos os lançamentos do período com data, tipo, razão social, valor e saldo</li>
           <li>• Categoria atribuída a cada lançamento</li>
           <li>• Resumo com total de entradas, saídas e saldo do período</li>
-          <li>• Planilha XLSX com duas abas: Extrato Detalhado + Resumo Mensal</li>
+          <li>• Planilha XLSX com duas abas: Extrato Detalhado + Resumo</li>
         </ul>
       </div>
     </div>

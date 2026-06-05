@@ -127,7 +127,7 @@ export default function ContasPage() {
     <div className="p-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Contas Bancárias</h1>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Contas Bancárias</h1>
           <p className="text-sm text-gray-500 mt-0.5">Gerencie as contas para separar extratos por banco</p>
         </div>
         <button

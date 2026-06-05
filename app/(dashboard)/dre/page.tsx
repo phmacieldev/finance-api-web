@@ -6,7 +6,7 @@ import api from '@/lib/api'
 import { formatCurrency, monthName } from '@/lib/utils'
 import { useMesSelecionado } from '@/hooks/useMesSelecionado'
 import { MonthNav } from '@/components/MonthNav'
-import type { Dre } from '@/types'
+import type { Dre, DreCategoriaTotalDTO } from '@/types'
 
 export default function DrePage() {
   const nav = useMesSelecionado()
@@ -95,12 +95,12 @@ export default function DrePage() {
 
                     {hasCats && (
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
-                        {linha.categorias.map((cat) => (
+                        {linha.categorias.map((cat: DreCategoriaTotalDTO) => (
                           <span
-                            key={cat}
+                            key={cat.nome}
                             className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-600 text-gray-500 dark:text-gray-300"
                           >
-                            {cat}
+                            {cat.nome} — {formatCurrency(cat.valor)}
                           </span>
                         ))}
                       </div>
