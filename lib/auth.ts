@@ -6,7 +6,7 @@ export const REFRESH_COOKIE = 'financeiro_refresh'
 const secure = typeof window !== 'undefined' && window.location.protocol === 'https:'
 
 export function saveToken(token: string) {
-  Cookies.set(AUTH_COOKIE, token, { expires: 1 / 96, sameSite: 'strict', secure }) // 15 min
+  Cookies.set(AUTH_COOKIE, token, { expires: 1 / 24, sameSite: 'strict', secure }) // 1h
 }
 
 export function saveRefreshToken(token: string) {
