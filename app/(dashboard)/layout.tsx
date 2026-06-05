@@ -37,6 +37,8 @@ const navItemsAdmin = [
   { href: '/configuracoes',   label: 'Configurações',  icon: Settings },
 ]
 
+const ADMIN_PATHS = ['/painel-admin', '/admin-usuarios', '/configuracoes']
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -51,13 +53,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isPlatformAdmin = me?.role === 'PLATFORM_ADMIN'
   const isUser = me?.role === 'USER'
 
-  const adminPaths = ['/painel-admin', '/admin-usuarios', '/configuracoes']
   useEffect(() => {
     if (!meLoading && isPlatformAdmin) {
-      const onAdminRoute = adminPaths.some(p => pathname === p || pathname.startsWith(p + '/'))
+      const onAdminRoute = ADMIN_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
       if (!onAdminRoute) router.replace('/painel-admin')
     }
-  }, [isPlatformAdmin, meLoading, pathname])
+  }, [isPlatformAdmin, meLoading, pathname, router])
 
   const { data: semCatList = [] } = useQuery<{ id: string }[]>({
     queryKey: ['sem-categoria', mes, ano],

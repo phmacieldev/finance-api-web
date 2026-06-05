@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { CheckCircle, AlertCircle, User, Building2, Lock } from 'lucide-react'
@@ -254,7 +254,7 @@ function DadosEmpresa({ perfil, onSuccess, onError }: {
   const cnpjFormatado = perfil.cnpj ? maskCnpj(perfil.cnpj) : ''
   const cpfFormatado  = perfil.cpf  ? maskCpf(perfil.cpf)   : ''
 
-  const { register, handleSubmit, control, watch, formState: { errors, isDirty } } = useForm<EmpresaForm>({
+  const { register, handleSubmit, control, formState: { errors, isDirty } } = useForm<EmpresaForm>({
     resolver: zodResolver(empresaSchema),
     defaultValues: {
       name: perfil.enterpriseName,
@@ -264,7 +264,7 @@ function DadosEmpresa({ perfil, onSuccess, onError }: {
     },
   })
 
-  const tipoPessoa = watch('tipoPessoa')
+  const tipoPessoa = useWatch({ control, name: 'tipoPessoa' })
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: EmpresaForm) => api.patch('/me/empresa', {
