@@ -147,7 +147,7 @@ export default function PainelAdminPage() {
     const f = novaEmpresaForm
     const doc = f.tipoPessoa === 'JURIDICA' ? f.cnpj.replace(/\D/g, '') : f.cpf.replace(/\D/g, '')
     const docLen = f.tipoPessoa === 'JURIDICA' ? 14 : 11
-    if (!f.name.trim() || doc.length !== docLen || !f.adminName.trim() || !f.adminEmail.trim() || f.adminPassword.length < 6) {
+    if (!f.name.trim() || doc.length !== docLen || !f.adminName.trim() || !f.adminEmail.trim() || f.adminPassword.length < 8) {
       setNovaEmpresaError('Preencha todos os campos corretamente')
       return
     }
@@ -283,7 +283,7 @@ export default function PainelAdminPage() {
               <div>
                 <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Senha</label>
                 <input value={novaEmpresaForm.adminPassword} onChange={e => setNovaEmpresaForm(f => ({ ...f, adminPassword: e.target.value }))}
-                  type="password" placeholder="Mínimo 6 caracteres"
+                  type="password" placeholder="Mínimo 8 caracteres"
                   className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-lg focus:outline-none focus:border-blue-500" />
               </div>
               {novaEmpresaError && <p className="text-red-500 text-sm">{novaEmpresaError}</p>}
@@ -503,7 +503,7 @@ export default function PainelAdminPage() {
                 <div>
                   <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Senha</label>
                   <input value={addUserForm.password} onChange={e => setAddUserForm(f => ({ ...f, password: e.target.value }))}
-                    type="password" placeholder="Mínimo 6 caracteres"
+                    type="password" placeholder="Mínimo 8 caracteres"
                     className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg focus:outline-none focus:border-blue-500" />
                 </div>
                 <div>
@@ -616,7 +616,7 @@ export default function PainelAdminPage() {
               <div>
                 <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Senha</label>
                 <input value={novoAdminForm.password} onChange={e => setNovoAdminForm(f => ({ ...f, password: e.target.value }))}
-                  type="password" placeholder="Mínimo 6 caracteres"
+                  type="password" placeholder="Mínimo 8 caracteres"
                   className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500" />
               </div>
               {novoAdminError && <p className="text-red-500 text-xs">{novoAdminError}</p>}
