@@ -5,6 +5,12 @@
 **Produção:** https://finance-api-web.vercel.app  
 **Backend:** https://github.com/phmacieldev/finance-api
 
+![Next.js](https://img.shields.io/badge/Next.js-16.2.7-black?logo=next.js)
+![React](https://img.shields.io/badge/React-19.2.4-61dafb?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?logo=typescript)
+![TanStack Query](https://img.shields.io/badge/TanStack_Query-5.x-ff4154?logo=reactquery)
+![Tests](https://img.shields.io/badge/tests-12_passing-brightgreen?logo=vitest)
+
 ---
 
 ## Por que eu construí isso
