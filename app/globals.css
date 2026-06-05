@@ -63,3 +63,11 @@ html.dark textarea {
 html.dark input::placeholder,
 html.dark textarea::placeholder { color: #64748b; }
 html.dark select option { background-color: #1e293b; color: #f1f5f9; }
+
+@media print {
+  aside, .no-print { display: none !important; }
+  main { overflow: visible !important; }
+  body, html { background: white !important; color: black !important; }
+  .dark body, .dark html { background: white !important; color: black !important; }
+  * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
