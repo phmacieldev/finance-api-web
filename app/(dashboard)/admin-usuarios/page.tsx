@@ -7,7 +7,7 @@ import api from '@/lib/api'
 import type { AdminEnterprise, AdminUser, CompanyRole } from '@/types'
 
 const ROLE_META: Record<CompanyRole, { label: string; color: string; icon: React.ReactNode }> = {
-  CEO:   { label: 'CEO',          color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',    icon: <Crown   className="w-3 h-3" /> },
+  CEO:   { label: 'Owner',         color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',    icon: <Crown   className="w-3 h-3" /> },
   OWNER: { label: 'Operador',     color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300', icon: <Shield  className="w-3 h-3" /> },
   USER:  { label: 'Visualizador', color: 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300',          icon: <UserIcon className="w-3 h-3" /> },
 }
@@ -134,7 +134,7 @@ function EmpresaRow({ empresa }: { empresa: AdminEnterprise }) {
                     onChange={e => setForm(f => ({ ...f, role: e.target.value as CompanyRole }))}
                     className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-lg focus:outline-none focus:border-blue-500"
                   >
-                    <option value="CEO">CEO — Dono</option>
+                    <option value="CEO">Owner — Dono</option>
                     <option value="OWNER">Operador</option>
                     <option value="USER">Visualizador</option>
                   </select>

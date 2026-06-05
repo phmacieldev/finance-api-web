@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { removeToken, getRefreshToken } from '@/lib/auth'
 import { clearMesSelecionado, useMesSelecionado } from '@/hooks/useMesSelecionado'
@@ -49,6 +50,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   })
   const isPlatformAdmin = me?.role === 'PLATFORM_ADMIN'
   const isUser = me?.role === 'USER'
+
+  const adminPaths = ['/painel-admin', '/admin-usuarios', '/configuracoes']
+  useEffect(() => {
+    if (!meLoading && isPlatformAdmin) {
+      const onAdminRoute = adminPaths.some(p => pathname === p || pathname.startsWith(p + '/'))
+      if (!onAdminRoute) router.replace('/painel-admin')
+    }
+  }, [isPlatformAdmin, meLoading, pathname])
 
   const { data: semCatList = [] } = useQuery<{ id: string }[]>({
     queryKey: ['sem-categoria', mes, ano],

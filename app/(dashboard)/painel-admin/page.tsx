@@ -26,7 +26,7 @@ const PLAN_COLORS: Record<string, string> = {
   PRO:   'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
 }
 const ROLE_META: Record<CompanyRole, { label: string; color: string; icon: React.ReactNode }> = {
-  CEO:   { label: 'CEO',        color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',   icon: <Crown  className="w-3 h-3" /> },
+  CEO:   { label: 'Owner',      color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',   icon: <Crown  className="w-3 h-3" /> },
   OWNER: { label: 'Operador',   color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300', icon: <Shield className="w-3 h-3" /> },
   USER:  { label: 'Visualizador', color: 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300',       icon: <UserIcon className="w-3 h-3" /> },
 }
@@ -50,6 +50,12 @@ export default function PainelAdminPage() {
   const [novoAdminForm, setNovoAdminForm] = useState({ name: '', email: '', password: '' })
   const [novoAdminError, setNovoAdminError] = useState('')
   const [confirmDeleteEmpresa, setConfirmDeleteEmpresa] = useState(false)
+  const [showNovaEmpresa, setShowNovaEmpresa] = useState(false)
+  const [novaEmpresaForm, setNovaEmpresaForm] = useState({
+    name: '', tipoPessoa: 'JURIDICA' as 'JURIDICA' | 'FISICA', cnpj: '', cpf: '', plan: 'FREE',
+    adminName: '', adminEmail: '', adminPassword: '',
+  })
+  const [novaEmpresaError, setNovaEmpresaError] = useState('')
 
   const { data: empresas = [], isLoading } = useQuery<AdminEnterprise[]>({
     queryKey: ['admin-empresas', filtroStatus],
@@ -122,6 +128,33 @@ export default function PainelAdminPage() {
     onError: (e: unknown) => setNovoAdminError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao criar admin'),
   })
 
+  const { mutate: criarEmpresa, isPending: criandoEmpresa } = useMutation({
+    mutationFn: () => api.post('/admin/empresas', {
+      ...novaEmpresaForm,
+      cnpj: novaEmpresaForm.tipoPessoa === 'JURIDICA' ? novaEmpresaForm.cnpj.replace(/\D/g, '') : undefined,
+      cpf:  novaEmpresaForm.tipoPessoa === 'FISICA'   ? novaEmpresaForm.cpf.replace(/\D/g, '')  : undefined,
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-empresas'] })
+      setNovaEmpresaForm({ name: '', tipoPessoa: 'JURIDICA', cnpj: '', cpf: '', plan: 'FREE', adminName: '', adminEmail: '', adminPassword: '' })
+      setShowNovaEmpresa(false)
+      setNovaEmpresaError('')
+    },
+    onError: (e: unknown) => setNovaEmpresaError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao criar empresa'),
+  })
+
+  function submitNovaEmpresa() {
+    const f = novaEmpresaForm
+    const doc = f.tipoPessoa === 'JURIDICA' ? f.cnpj.replace(/\D/g, '') : f.cpf.replace(/\D/g, '')
+    const docLen = f.tipoPessoa === 'JURIDICA' ? 14 : 11
+    if (!f.name.trim() || doc.length !== docLen || !f.adminName.trim() || !f.adminEmail.trim() || f.adminPassword.length < 6) {
+      setNovaEmpresaError('Preencha todos os campos corretamente')
+      return
+    }
+    setNovaEmpresaError('')
+    criarEmpresa()
+  }
+
   function submitNovoAdmin() {
     if (!novoAdminForm.name.trim() || !novoAdminForm.email.trim() || !novoAdminForm.password.trim()) {
       setNovoAdminError('Preencha todos os campos')
@@ -166,6 +199,12 @@ export default function PainelAdminPage() {
             </span>
           )}
           <button
+            onClick={() => { setShowNovaEmpresa(true); setNovaEmpresaError('') }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Nova Empresa
+          </button>
+          <button
             onClick={() => { setShowNovoAdmin(true); setNovoAdminError('') }}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
           >
@@ -173,6 +212,92 @@ export default function PainelAdminPage() {
           </button>
         </div>
       </div>
+
+      {/* Modal: Nova Empresa */}
+      {showNovaEmpresa && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-lg overflow-y-auto max-h-[90vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-700">
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Nova Empresa</h2>
+              <button onClick={() => setShowNovaEmpresa(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Dados da empresa</p>
+              <div>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Nome da empresa</label>
+                <input value={novaEmpresaForm.name} onChange={e => setNovaEmpresaForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="Minha Empresa Ltda."
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-lg focus:outline-none focus:border-blue-500" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Tipo de pessoa</label>
+                  <select value={novaEmpresaForm.tipoPessoa} onChange={e => setNovaEmpresaForm(f => ({ ...f, tipoPessoa: e.target.value as 'JURIDICA' | 'FISICA', cnpj: '', cpf: '' }))}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-lg focus:outline-none focus:border-blue-500">
+                    <option value="JURIDICA">Pessoa Jurídica</option>
+                    <option value="FISICA">Pessoa Física</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">{novaEmpresaForm.tipoPessoa === 'JURIDICA' ? 'CNPJ' : 'CPF'}</label>
+                  <input
+                    value={novaEmpresaForm.tipoPessoa === 'JURIDICA' ? novaEmpresaForm.cnpj : novaEmpresaForm.cpf}
+                    onChange={e => {
+                      const raw = e.target.value.replace(/\D/g, '')
+                      if (novaEmpresaForm.tipoPessoa === 'JURIDICA') {
+                        const v = raw.slice(0, 14).replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2')
+                        setNovaEmpresaForm(f => ({ ...f, cnpj: v }))
+                      } else {
+                        const v = raw.slice(0, 11).replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1-$2')
+                        setNovaEmpresaForm(f => ({ ...f, cpf: v }))
+                      }
+                    }}
+                    placeholder={novaEmpresaForm.tipoPessoa === 'JURIDICA' ? '00.000.000/0000-00' : '000.000.000-00'}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-lg focus:outline-none focus:border-blue-500" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Plano</label>
+                <select value={novaEmpresaForm.plan} onChange={e => setNovaEmpresaForm(f => ({ ...f, plan: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-lg focus:outline-none focus:border-blue-500">
+                  <option value="FREE">FREE</option>
+                  <option value="BASIC">BASIC</option>
+                  <option value="PRO">PRO</option>
+                </select>
+              </div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide pt-2">Usuário responsável (Owner)</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Nome</label>
+                  <input value={novaEmpresaForm.adminName} onChange={e => setNovaEmpresaForm(f => ({ ...f, adminName: e.target.value }))}
+                    placeholder="João Silva"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-lg focus:outline-none focus:border-blue-500" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">E-mail</label>
+                  <input value={novaEmpresaForm.adminEmail} onChange={e => setNovaEmpresaForm(f => ({ ...f, adminEmail: e.target.value }))}
+                    type="email" placeholder="joao@empresa.com"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-lg focus:outline-none focus:border-blue-500" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Senha</label>
+                <input value={novaEmpresaForm.adminPassword} onChange={e => setNovaEmpresaForm(f => ({ ...f, adminPassword: e.target.value }))}
+                  type="password" placeholder="Mínimo 6 caracteres"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-lg focus:outline-none focus:border-blue-500" />
+              </div>
+              {novaEmpresaError && <p className="text-red-500 text-sm">{novaEmpresaError}</p>}
+              <div className="flex justify-end gap-3 pt-2">
+                <button onClick={() => setShowNovaEmpresa(false)} className="px-4 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700">Cancelar</button>
+                <button onClick={submitNovaEmpresa} disabled={criandoEmpresa}
+                  className="px-4 py-2 text-sm bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white rounded-lg font-medium">
+                  {criandoEmpresa ? 'Criando...' : 'Criar empresa'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Lista de empresas */}
       {!selectedEmpresa && (
@@ -385,7 +510,7 @@ export default function PainelAdminPage() {
                   <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Cargo</label>
                   <select value={addUserForm.role} onChange={e => setAddUserForm(f => ({ ...f, role: e.target.value as CompanyRole }))}
                     className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-lg focus:outline-none focus:border-blue-500">
-                    <option value="CEO">CEO — Dono</option>
+                    <option value="CEO">Owner — Dono</option>
                     <option value="OWNER">Operador</option>
                     <option value="USER">Visualizador</option>
                   </select>

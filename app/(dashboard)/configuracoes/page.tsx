@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { CheckCircle, AlertCircle, User, Building2, Lock } from 'lucide-react'
@@ -17,8 +17,28 @@ interface Perfil {
   role: string
   enterpriseId: string
   enterpriseName: string
-  cnpj: string
+  cnpj: string | null
+  cpf: string | null
+  tipoPessoa: 'JURIDICA' | 'FISICA' | null
   plan: string
+  emailVerificado: boolean
+}
+
+function maskCnpj(value: string): string {
+  const d = value.replace(/\D/g, '').slice(0, 14)
+  return d
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2')
+}
+
+function maskCpf(value: string): string {
+  const d = value.replace(/\D/g, '').slice(0, 11)
+  return d
+    .replace(/^(\d{3})(\d)/, '$1.$2')
+    .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1-$2')
 }
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
@@ -39,7 +59,17 @@ const senhaSchema = z.object({
 
 const empresaSchema = z.object({
   name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
-  cnpj: z.string().min(14, 'CNPJ inválido'),
+  tipoPessoa: z.enum(['JURIDICA', 'FISICA']),
+  cnpj: z.string().optional().nullable(),
+  cpf:  z.string().optional().nullable(),
+}).superRefine((d, ctx) => {
+  if (d.tipoPessoa === 'JURIDICA') {
+    if (!d.cnpj || d.cnpj.replace(/\D/g, '').length !== 14)
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'CNPJ deve ter 14 dígitos', path: ['cnpj'] })
+  } else {
+    if (!d.cpf || d.cpf.replace(/\D/g, '').length !== 11)
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'CPF deve ter 11 dígitos', path: ['cpf'] })
+  }
 })
 
 type PerfilForm = z.infer<typeof perfilSchema>
@@ -218,18 +248,34 @@ function DadosEmpresa({ perfil, onSuccess, onError }: {
   onError: (msg: string) => void
 }) {
   const qc = useQueryClient()
-  const isAdmin = perfil.role === 'ADMIN'
+  const isAdmin = perfil.role === 'CEO'
 
-  const { register, handleSubmit, formState: { errors, isDirty } } = useForm<EmpresaForm>({
+  const tipoPessoaInicial = (perfil.tipoPessoa ?? 'JURIDICA') as 'JURIDICA' | 'FISICA'
+  const cnpjFormatado = perfil.cnpj ? maskCnpj(perfil.cnpj) : ''
+  const cpfFormatado  = perfil.cpf  ? maskCpf(perfil.cpf)   : ''
+
+  const { register, handleSubmit, control, watch, formState: { errors, isDirty } } = useForm<EmpresaForm>({
     resolver: zodResolver(empresaSchema),
-    defaultValues: { name: perfil.enterpriseName, cnpj: perfil.cnpj },
+    defaultValues: {
+      name: perfil.enterpriseName,
+      tipoPessoa: tipoPessoaInicial,
+      cnpj: cnpjFormatado,
+      cpf:  cpfFormatado,
+    },
   })
 
+  const tipoPessoa = watch('tipoPessoa')
+
   const { mutate, isPending } = useMutation({
-    mutationFn: (data: EmpresaForm) => api.patch('/me/empresa', data).then((r) => r.data),
+    mutationFn: (data: EmpresaForm) => api.patch('/me/empresa', {
+      name: data.name,
+      tipoPessoa: data.tipoPessoa,
+      cnpj: data.tipoPessoa === 'JURIDICA' ? data.cnpj?.replace(/\D/g, '') : null,
+      cpf:  data.tipoPessoa === 'FISICA'   ? data.cpf?.replace(/\D/g, '')  : null,
+    }).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['perfil'] })
-      onSuccess('Dados da empresa atualizados')
+      onSuccess('Dados atualizados com sucesso')
     },
     onError: (e: unknown) => onError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao atualizar empresa'),
   })
@@ -237,12 +283,49 @@ function DadosEmpresa({ perfil, onSuccess, onError }: {
   return (
     <SectionCard title="Dados da empresa" icon={Building2}>
       <form onSubmit={handleSubmit((d) => mutate(d))} className="space-y-4">
-        <Field label="Razão social" error={errors.name?.message}>
-          <Input {...register('name')} placeholder="Nome da empresa" disabled={!isAdmin} />
+        <Field label="Razão social / Nome" error={errors.name?.message}>
+          <Input {...register('name')} placeholder="Nome da empresa ou pessoa" disabled={!isAdmin} />
         </Field>
-        <Field label="CNPJ" error={errors.cnpj?.message}>
-          <Input {...register('cnpj')} placeholder="00.000.000/0000-00" disabled={!isAdmin} />
+
+        <Field label="Tipo de pessoa" error={undefined}>
+          <select
+            {...register('tipoPessoa')}
+            disabled={!isAdmin}
+            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg
+              bg-white dark:bg-slate-700 text-gray-900 dark:text-white
+              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+              disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <option value="JURIDICA">Pessoa Jurídica (CNPJ)</option>
+            <option value="FISICA">Pessoa Física (CPF)</option>
+          </select>
         </Field>
+
+        {tipoPessoa === 'JURIDICA' ? (
+          <Field label="CNPJ" error={(errors as { cnpj?: { message?: string } }).cnpj?.message}>
+            <Controller name="cnpj" control={control} render={({ field }) => (
+              <Input
+                {...field}
+                value={field.value ?? ''}
+                onChange={e => field.onChange(maskCnpj(e.target.value))}
+                placeholder="00.000.000/0000-00"
+                disabled={!isAdmin}
+              />
+            )} />
+          </Field>
+        ) : (
+          <Field label="CPF" error={(errors as { cpf?: { message?: string } }).cpf?.message}>
+            <Controller name="cpf" control={control} render={({ field }) => (
+              <Input
+                {...field}
+                value={field.value ?? ''}
+                onChange={e => field.onChange(maskCpf(e.target.value))}
+                placeholder="000.000.000-00"
+                disabled={!isAdmin}
+              />
+            )} />
+          </Field>
+        )}
 
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-2">
@@ -256,7 +339,7 @@ function DadosEmpresa({ perfil, onSuccess, onError }: {
               {PLAN_LABELS[perfil.plan] ?? perfil.plan}
             </span>
           </div>
-          {isAdmin && (
+          {isAdmin ? (
             <button
               type="submit"
               disabled={!isDirty || isPending}
@@ -265,9 +348,8 @@ function DadosEmpresa({ perfil, onSuccess, onError }: {
             >
               {isPending ? 'Salvando...' : 'Salvar alterações'}
             </button>
-          )}
-          {!isAdmin && (
-            <span className="text-xs text-gray-400">Somente administradores podem editar</span>
+          ) : (
+            <span className="text-xs text-gray-400">Somente o Owner pode editar</span>
           )}
         </div>
       </form>
