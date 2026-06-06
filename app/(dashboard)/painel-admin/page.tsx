@@ -219,7 +219,7 @@ export default function PainelAdminPage() {
         <div className="flex items-center gap-2">
           <Link
             href="/painel-admin/audit-log"
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 bg-white dark:bg-slate-800 text-sm font-medium rounded-lg transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 bg-slate-700 hover:bg-slate-600 dark:bg-slate-600 dark:hover:bg-slate-500 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <ShieldCheck className="w-4 h-4" /> Audit Log
           </Link>

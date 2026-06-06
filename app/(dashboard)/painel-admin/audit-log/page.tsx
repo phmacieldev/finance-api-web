@@ -50,6 +50,8 @@ const ACTION_LABELS: Record<string, string> = {
   CATEGORIA_DELETED: 'Categoria removida',
   CONTA_BANCARIA_CREATED: 'Conta bancária criada',
   CONTA_BANCARIA_DELETED: 'Conta bancária removida',
+  ENTERPRISE_SWITCH: 'Troca de empresa',
+  USER_MEMBER_ADDED: 'Membro adicionado',
   ENTERPRISE_APPROVED: 'Empresa aprovada',
   ENTERPRISE_REJECTED: 'Empresa rejeitada',
   ENTERPRISE_PLAN_UPDATED: 'Plano alterado',
@@ -66,6 +68,7 @@ const ACTION_COLORS: Record<string, string> = {
   ENTERPRISE_DELETED: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300',
   PASSWORD_RESET_REQUESTED: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   PASSWORD_RESET_COMPLETED: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  ENTERPRISE_SWITCH: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
 }
 
 const ALL_ACTIONS = Object.keys(ACTION_LABELS)

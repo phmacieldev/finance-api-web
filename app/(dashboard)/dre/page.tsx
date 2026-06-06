@@ -57,7 +57,7 @@ export default function DrePage() {
           )}
 
           <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700/50">
               <h2 className="font-semibold text-gray-800 dark:text-white capitalize">
                 DRE — {monthName(mes)} / {ano}
               </h2>
@@ -76,7 +76,7 @@ export default function DrePage() {
                       isLucroLiquido
                         ? 'bg-blue-600 dark:bg-blue-700 font-semibold'
                         : linha.ehSubtotal
-                        ? 'bg-slate-100 dark:bg-slate-700/80 font-semibold'
+                        ? 'bg-gray-50 dark:bg-slate-700/60 font-semibold'
                         : 'hover:bg-gray-50 dark:hover:bg-slate-700/30'
                     }`}
                   >
@@ -85,17 +85,17 @@ export default function DrePage() {
                         isLucroLiquido
                           ? 'text-white font-bold'
                           : linha.ehSubtotal
-                          ? 'text-gray-800 dark:text-white'
-                          : 'text-gray-700 dark:text-gray-200'
+                          ? 'text-gray-800 dark:text-gray-100 font-semibold'
+                          : 'text-gray-700 dark:text-gray-300'
                       }`}>
                         {linha.label}
                       </span>
-                      <span className={`text-sm font-medium tabular-nums ${
+                      <span className={`text-sm font-semibold tabular-nums ${
                         isLucroLiquido
-                          ? isPositive ? 'text-green-200' : 'text-red-200'
-                          : linha.ehSubtotal
-                          ? isPositive ? 'text-gray-800 dark:text-white' : 'text-red-600 dark:text-red-300'
-                          : isPositive ? 'text-gray-800 dark:text-gray-100' : 'text-red-600 dark:text-red-300'
+                          ? isPositive ? 'text-green-200' : 'text-red-300'
+                          : isPositive
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-red-600 dark:text-red-400'
                       }`}>
                         {formatCurrency(linha.valor)}
                       </span>
@@ -106,7 +106,7 @@ export default function DrePage() {
                         {linha.categorias.map((cat: DreCategoriaTotalDTO) => (
                           <span
                             key={cat.nome}
-                            className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-600 text-gray-500 dark:text-gray-300"
+                            className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-600/80 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-600"
                           >
                             {cat.nome} — {formatCurrency(cat.valor)}
                           </span>
