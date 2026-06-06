@@ -24,13 +24,17 @@ async function handler(req: NextRequest): Promise<NextResponse> {
     duplex: hasBody ? 'half' : undefined,
   })
 
-  const STRIP_HEADERS = new Set(['content-encoding', 'transfer-encoding', 'content-length'])
+  const STRIP_HEADERS = new Set(['content-encoding', 'transfer-encoding', 'content-length', 'set-cookie'])
   const responseHeaders = new Headers()
   upstream.headers.forEach((value, key) => {
     if (!STRIP_HEADERS.has(key.toLowerCase())) {
       responseHeaders.set(key, value)
     }
   })
+  // getSetCookie() returns each Set-Cookie as a separate string (forEach merges them with comma, breaking cookie parsing)
+  for (const cookie of upstream.headers.getSetCookie()) {
+    responseHeaders.append('set-cookie', cookie)
+  }
 
   return new NextResponse(upstream.body, {
     status: upstream.status,
