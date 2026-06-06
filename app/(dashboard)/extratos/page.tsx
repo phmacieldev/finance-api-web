@@ -672,15 +672,11 @@ export default function ExtratosPage() {
   const [exportingFmt, setExportingFmt] = useState<'csv' | 'xlsx' | null>(null)
   const [showExportMenu, setShowExportMenu] = useState(false)
 
-  const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1'
-
   async function exportar(fmt: 'csv' | 'xlsx') {
     setExportingFmt(fmt)
     try {
-      const Cookies = (await import('js-cookie')).default
-      const token = Cookies.get('financeiro_token')
-      const url = `${API}/export/${fmt}?mes=${mes}&ano=${ano}`
-      const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      const url = `/api/v1/export/${fmt}?mes=${mes}&ano=${ano}`
+      const res = await fetch(url, { credentials: 'include' })
       if (!res.ok) throw new Error()
       const blob = await res.blob()
       const a = document.createElement('a')
