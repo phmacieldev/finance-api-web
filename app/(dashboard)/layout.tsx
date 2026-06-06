@@ -71,7 +71,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     queryFn: () =>
       api.get<{ id: string }[]>(`/extratos/sem-categoria?mes=${mes}&ano=${ano}`).then((r) => r.data),
     staleTime: 60_000,
-    enabled: !isPlatformAdmin,
+    enabled: !meLoading && !isPlatformAdmin,
   })
   const semCatCount = semCatList.length
 
