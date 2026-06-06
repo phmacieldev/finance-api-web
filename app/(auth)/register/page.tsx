@@ -59,8 +59,13 @@ export default function RegisterPage() {
     mutationFn: (data: Form) =>
       api.post<TokenResponseDTO>('/auth/register', { ...data, cnpj: data.cnpj.replace(/\D/g, '') }).then((r) => r.data),
     onSuccess: (data, variables) => {
-      // Registration requires email verification — redirect to pending page
-      router.push(`/verificar-pendente?email=${encodeURIComponent(variables.email)}`)
+      if (data.emailPendente) {
+        // Novo usuário — precisa verificar e-mail
+        router.push(`/verificar-pendente?email=${encodeURIComponent(variables.email)}`)
+      } else {
+        // E-mail já verificado — nova empresa só aguarda aprovação do admin
+        router.push(`/verificar-pendente?email=${encodeURIComponent(variables.email)}&aprovacao=1`)
+      }
     },
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message

@@ -8,6 +8,7 @@ import api from '@/lib/api'
 function VerificarPendenteContent() {
   const params = useSearchParams()
   const email = params.get('email') ?? ''
+  const somenteAprovacao = params.get('aprovacao') === '1'
   const [reenviado, setReenviado] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -20,6 +21,26 @@ function VerificarPendenteContent() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (somenteAprovacao) {
+    return (
+      <div className="bg-white rounded-2xl p-8 w-full max-w-sm text-center shadow-xl">
+        <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle2 className="w-7 h-7 text-green-600" />
+        </div>
+        <h1 className="text-xl font-semibold text-gray-900 mb-2">Empresa cadastrada!</h1>
+        <p className="text-sm text-gray-500 mb-4">
+          Sua nova empresa foi registrada com sucesso e está aguardando aprovação do administrador da plataforma.
+        </p>
+        <p className="text-xs text-gray-400 mb-6">
+          Assim que aprovada, ela estará disponível para troca no seu painel.
+        </p>
+        <a href="/login" className="text-sm text-blue-600 hover:underline">
+          Ir para o login →
+        </a>
+      </div>
+    )
   }
 
   return (
