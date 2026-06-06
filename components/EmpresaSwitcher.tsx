@@ -32,7 +32,7 @@ export function EmpresaSwitcher({
       await api.post(`/auth/switch-empresa/${id}`)
       clearMesSelecionado()
       queryClient.clear()
-      window.location.href = '/dashboard'
+      window.location.assign('/dashboard')
     } catch {
       setSwitching(null)
     }
