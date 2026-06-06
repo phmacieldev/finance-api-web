@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronDown, Building2, Check, Loader2 } from 'lucide-react'
+import { ChevronDown, Building2, Check, Loader2, Clock } from 'lucide-react'
 import api from '@/lib/api'
 import { queryClient } from '@/lib/queryClient'
 import { clearMesSelecionado } from '@/hooks/useMesSelecionado'
@@ -24,12 +24,12 @@ export function EmpresaSwitcher({
     staleTime: 60_000,
   })
 
-  async function switchEmpresa(id: string) {
-    if (id === currentEnterpriseId || switching) return
-    setSwitching(id)
+  async function switchEmpresa(empresa: EmpresaResumo) {
+    if (empresa.id === currentEnterpriseId || switching || !empresa.ativa) return
+    setSwitching(empresa.id)
     setOpen(false)
     try {
-      await api.post(`/auth/switch-empresa/${id}`)
+      await api.post(`/auth/switch-empresa/${empresa.id}`)
       clearMesSelecionado()
       queryClient.clear()
       window.location.assign('/dashboard')
@@ -68,24 +68,38 @@ export function EmpresaSwitcher({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute left-0 right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden">
-            {empresas.map(empresa => (
-              <button
-                key={empresa.id}
-                onClick={() => switchEmpresa(empresa.id)}
-                disabled={!!switching}
-                className="flex items-center gap-2.5 w-full px-3 py-2.5 text-left hover:bg-slate-700 transition-colors disabled:opacity-50"
-              >
-                {empresa.id === currentEnterpriseId ? (
-                  <Check className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
-                ) : (
-                  <div className="w-3.5 h-3.5 flex-shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-slate-200 truncate font-medium">{empresa.name}</p>
-                  <p className="text-xs text-slate-500">{empresa.role} · {empresa.plan}</p>
-                </div>
-              </button>
-            ))}
+            {empresas.map(empresa => {
+              const isCurrent = empresa.id === currentEnterpriseId
+              const isPendente = !empresa.ativa
+              return (
+                <button
+                  key={empresa.id}
+                  onClick={() => switchEmpresa(empresa)}
+                  disabled={!!switching || isPendente}
+                  title={isPendente ? 'Aguardando aprovação do administrador' : undefined}
+                  className={`flex items-center gap-2.5 w-full px-3 py-2.5 text-left transition-colors ${
+                    isPendente
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:bg-slate-700 disabled:opacity-50'
+                  }`}
+                >
+                  {isCurrent ? (
+                    <Check className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                  ) : isPendente ? (
+                    <Clock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                  ) : (
+                    <div className="w-3.5 h-3.5 flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-200 truncate font-medium">{empresa.name}</p>
+                    <p className="text-xs text-slate-500">
+                      {empresa.role} · {empresa.plan}
+                      {isPendente && <span className="ml-1 text-amber-500">· Pendente</span>}
+                    </p>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </>
       )}
