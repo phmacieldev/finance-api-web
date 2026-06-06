@@ -87,7 +87,7 @@ export default function DrePage() {
                     {linha.ehSubtotal ? (
                       /* Linha de subtotal — destaque de seção */
                       <div className="px-5 py-3 bg-gray-50 dark:bg-slate-700/50 flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-200">
+                        <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-white">
                           {label}
                         </span>
                         <span className={`text-sm font-bold tabular-nums ${

@@ -192,7 +192,7 @@ export default function ConciliacaoPage() {
           {/* Daily Table */}
           <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-200 dark:border-slate-700">
-              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Detalhamento Diário</h2>
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-white">Detalhamento Diário</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

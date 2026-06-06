@@ -44,7 +44,7 @@ export default function RelatorioPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Relatório Comparativo</h1>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Relatório Comparativo</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Evolução mensal de entradas, saídas e resultado</p>
         </div>
         <div className="flex gap-2 no-print items-center">
@@ -124,7 +124,7 @@ export default function RelatorioPage() {
 
       {/* Gráfico */}
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-4">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-white mb-4">
           {chartType === 'bar' ? 'Comparativo Mensal' : 'Tendência Mensal'}
         </h2>
 
@@ -174,7 +174,7 @@ export default function RelatorioPage() {
       {!isLoading && chartData.length > 0 && (
         <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 dark:border-slate-700">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Detalhe por mês</h2>
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-white">Detalhe por mês</h2>
           </div>
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700">
@@ -213,7 +213,7 @@ export default function RelatorioPage() {
             </tbody>
             <tfoot className="border-t-2 border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-900">
               <tr>
-                <td className="px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
+                <td className="px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-white uppercase tracking-wide">
                   Total
                 </td>
                 <td className="px-4 py-2.5 text-right font-bold text-green-600 dark:text-green-400">
