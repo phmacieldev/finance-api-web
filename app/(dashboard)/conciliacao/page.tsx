@@ -30,7 +30,6 @@ export default function ConciliacaoPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem(storageKey)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved) setSaldoInput(saved)
     else setSaldoInput('')
   }, [storageKey])
