@@ -188,7 +188,7 @@ export default function RelatorioPage() {
             <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
               {data!.itens.map((item) => (
                 <tr key={`${item.ano}-${item.mes}`} className="hover:bg-gray-50 dark:hover:bg-slate-700/40">
-                  <td className="px-4 py-2.5 text-gray-700 dark:text-gray-200 font-medium">
+                  <td className="px-4 py-2.5 text-gray-700 dark:text-white font-medium">
                     {MES_LABELS[item.mes]} / {item.ano}
                   </td>
                   <td className="px-4 py-2.5 text-right">

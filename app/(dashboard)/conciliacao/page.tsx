@@ -214,7 +214,7 @@ export default function ConciliacaoPage() {
                     .filter((d) => d.entradas > 0 || d.saidas > 0 || d.entradasPrevistas > 0 || d.saidasPrevistas > 0)
                     .map((item) => (
                       <tr key={item.data} className="hover:bg-gray-50 dark:hover:bg-slate-700/40">
-                        <td className="px-4 py-2.5 text-gray-600 dark:text-gray-300 whitespace-nowrap">{formatDate(item.data)}</td>
+                        <td className="px-4 py-2.5 text-gray-600 dark:text-white whitespace-nowrap">{formatDate(item.data)}</td>
                         <td className="px-4 py-2.5 text-right text-green-600 dark:text-green-400 font-medium">
                           {item.entradas > 0 ? formatCurrency(item.entradas) : '—'}
                         </td>
@@ -230,7 +230,7 @@ export default function ConciliacaoPage() {
                         <td className={`px-4 py-2.5 text-right font-medium ${item.saldoDia >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-500 dark:text-orange-400'}`}>
                           {formatCurrency(item.saldoDia)}
                         </td>
-                        <td className="px-4 py-2.5 text-right text-gray-500 dark:text-gray-400">
+                        <td className="px-4 py-2.5 text-right text-gray-500 dark:text-white">
                           {formatCurrency(item.saldoAcumulado)}
                         </td>
                         <td className="px-4 py-2.5 text-center">
