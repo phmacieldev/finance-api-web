@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronDown, Building2, Check, Loader2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import { queryClient } from '@/lib/queryClient'
 import { clearMesSelecionado } from '@/hooks/useMesSelecionado'
@@ -16,7 +15,6 @@ export function EmpresaSwitcher({
   currentEnterpriseId: string
   currentEnterpriseName: string
 }) {
-  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [switching, setSwitching] = useState<string | null>(null)
 
@@ -34,7 +32,7 @@ export function EmpresaSwitcher({
       await api.post(`/auth/switch-empresa/${id}`)
       clearMesSelecionado()
       queryClient.clear()
-      router.push('/dashboard')
+      window.location.href = '/dashboard'
     } catch {
       setSwitching(null)
     }
