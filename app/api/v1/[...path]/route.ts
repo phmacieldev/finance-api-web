@@ -24,9 +24,12 @@ async function handler(req: NextRequest): Promise<NextResponse> {
     duplex: hasBody ? 'half' : undefined,
   })
 
+  const STRIP_HEADERS = new Set(['content-encoding', 'transfer-encoding', 'content-length'])
   const responseHeaders = new Headers()
   upstream.headers.forEach((value, key) => {
-    responseHeaders.set(key, value)
+    if (!STRIP_HEADERS.has(key.toLowerCase())) {
+      responseHeaders.set(key, value)
+    }
   })
 
   return new NextResponse(upstream.body, {
