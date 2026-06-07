@@ -6,6 +6,7 @@ import { ChevronDown, Building2, Check, Loader2, Clock } from 'lucide-react'
 import api from '@/lib/api'
 import { queryClient } from '@/lib/queryClient'
 import { clearMesSelecionado } from '@/hooks/useMesSelecionado'
+import { useToast } from '@/components/Toast'
 import type { EmpresaResumo } from '@/types'
 
 export function EmpresaSwitcher({
@@ -17,6 +18,7 @@ export function EmpresaSwitcher({
 }) {
   const [open, setOpen] = useState(false)
   const [switching, setSwitching] = useState<string | null>(null)
+  const toast = useToast()
 
   const { data: empresas = [] } = useQuery<EmpresaResumo[]>({
     queryKey: ['me', 'empresas'],
@@ -35,6 +37,7 @@ export function EmpresaSwitcher({
       window.location.assign('/dashboard')
     } catch {
       setSwitching(null)
+      toast('Não foi possível trocar de empresa. Tente novamente.', 'error')
     }
   }
 

@@ -5,6 +5,22 @@ const securityHeaders = [
   { key: 'X-Frame-Options',           value: 'DENY' },
   { key: 'Referrer-Policy',           value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy',        value: 'camera=(), microphone=(), geolocation=()' },
+  {
+    key: 'Content-Security-Policy',
+    // unsafe-inline necessário para Recharts (inline styles) e Tailwind
+    // unsafe-eval necessário para Next.js App Router em produção (webpack runtime)
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob:",
+      "font-src 'self'",
+      "connect-src 'self'",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join('; '),
+  },
 ]
 
 const nextConfig: NextConfig = {

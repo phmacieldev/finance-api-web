@@ -50,7 +50,7 @@ export default function DrePage() {
         </div>
       ) : !data ? null : (
         <>
-          {data.linhas.every(l => l.valor === 0) && data.lucroLiquido === 0 && (
+          {data.linhas.every(l => Number(l.valor) === 0) && Number(data.lucroLiquido) === 0 && (
             <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 flex items-start gap-2 mb-6">
               <Info className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-amber-800 dark:text-amber-300">
@@ -75,7 +75,7 @@ export default function DrePage() {
 
             <div className="divide-y divide-gray-100 dark:divide-slate-700/80">
               {data.linhas.map((linha, i) => {
-                const isPositive = linha.valor >= 0
+                const isPositive = Number(linha.valor) >= 0
                 const isLucroLiquido = /lucro l[íi]quido/i.test(linha.label)
                 const hasCats = !linha.ehSubtotal && linha.categorias?.length > 0
                 const label = linha.label.replace(/^\([+=\-]\)\s*/, '')
@@ -131,13 +131,13 @@ export default function DrePage() {
 
             {/* Resultado final */}
             <div className={`px-5 py-4 border-t-2 ${
-              data.lucroLiquido >= 0
+              Number(data.lucroLiquido) >= 0
                 ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
                 : 'border-red-500 bg-red-50 dark:bg-red-950/30'
             }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {data.lucroLiquido >= 0
+                  {Number(data.lucroLiquido) >= 0
                     ? <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                     : <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
                   }
