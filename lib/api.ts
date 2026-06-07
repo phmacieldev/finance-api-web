@@ -21,20 +21,32 @@ const api = axios.create({
   withCredentials: true,
 })
 
+/** Promise compartilhada entre requisições concorrentes durante o refresh — evita múltiplos refreshes em paralelo */
 let refreshing: Promise<void> | null = null
 
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
+  async (error: AxiosError) => {
     const original = error.config
 
-    if (error.response?.status !== 401 || original._retry || typeof window === 'undefined') {
+    // Não interceptar se:
+    // - status não é 401
+    // - já tentamos retry nesta requisição
+    // - estamos server-side (sem cookie de contexto)
+    // - a própria requisição que falhou era o refresh (evita loop infinito)
+    if (
+      error.response?.status !== 401 ||
+      (original as (typeof original & { _retry?: boolean }))!._retry ||
+      typeof window === 'undefined' ||
+      original?.url?.includes('/auth/refresh')
+    ) {
       return Promise.reject(error)
     }
 
-    original._retry = true
+    ;(original as typeof original & { _retry: boolean })!._retry = true
 
     try {
+      // Requisições concorrentes compartilham a mesma Promise de refresh
       if (!refreshing) {
         refreshing = axios
           .post(
@@ -49,7 +61,7 @@ api.interceptors.response.use(
       }
 
       await refreshing
-      return api(original)
+      return api(original!)
     } catch (refreshError) {
       refreshing = null
       const status = (refreshError as AxiosError).response?.status
