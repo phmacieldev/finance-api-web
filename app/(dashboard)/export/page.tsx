@@ -20,16 +20,15 @@ export default function ExportPage() {
   const [mesFim, setMesFim] = useState(new Date().getMonth() + 1)
   const [anoFim, setAnoFim] = useState(currentAno())
 
-  const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1'
-
+  // Usa sempre o proxy Next.js (/api/v1) para manter cookies first-party
   function buildUrl(format: 'csv' | 'xlsx') {
     if (modo === 'periodo') {
       const inicio = `${anoInicio}-${String(mesInicio).padStart(2, '0')}-01`
       const lastDay = new Date(anoFim, mesFim, 0).getDate()
       const fim = `${anoFim}-${String(mesFim).padStart(2, '0')}-${lastDay}`
-      return `${API}/export/${format}?inicio=${inicio}&fim=${fim}`
+      return `/api/v1/export/${format}?inicio=${inicio}&fim=${fim}`
     }
-    return `${API}/export/${format}?mes=${mes}&ano=${ano}`
+    return `/api/v1/export/${format}?mes=${mes}&ano=${ano}`
   }
 
   function buildFilename(format: 'csv' | 'xlsx') {
