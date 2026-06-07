@@ -16,7 +16,10 @@ export function extractFieldErrors(error: unknown): Record<string, string> {
 }
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? '/api/v1',
+  // Sempre usa o proxy Next.js (app/api/v1/[...path]) — cookies ficam no mesmo domínio
+  // do frontend (first-party), evitando bloqueio de cookies cross-origin em browsers modernos.
+  // O proxy encaminha para BACKEND_URL em produção (var de ambiente server-side no Vercel).
+  baseURL: '/api/v1',
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 })
