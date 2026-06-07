@@ -9,6 +9,20 @@ import { useMesSelecionado } from '@/hooks/useMesSelecionado'
 import { MonthNav } from '@/components/MonthNav'
 import type { ConciliacaoPeriodo } from '@/types'
 
+/** Suporta formato BR (1.234,56) e US (1234.56). Retorna null se inválido. */
+function parseSaldo(raw: string): number | null {
+  if (!raw || !raw.trim()) return null
+  const s = raw.trim().replace(/\s/g, '')
+  let num: number
+  if (s.includes(',')) {
+    // Formato BR: remove separador de milhar (.) e troca vírgula por ponto
+    num = parseFloat(s.replace(/\./g, '').replace(',', '.'))
+  } else {
+    num = parseFloat(s)
+  }
+  return isNaN(num) ? null : num
+}
+
 function VarianceBadge({ value }: { value: number }) {
   const pos = value >= 0
   return (
@@ -110,8 +124,11 @@ export default function ConciliacaoPage() {
               type="text"
               value={saldoInput}
               onChange={e => {
-                setSaldoInput(e.target.value)
-                localStorage.setItem(storageKey, e.target.value)
+                const val = e.target.value
+                setSaldoInput(val)
+                if (parseSaldo(val) !== null) {
+                  localStorage.setItem(storageKey, val)
+                }
               }}
               placeholder="0,00"
               className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg text-sm focus:outline-none focus:border-blue-400"
@@ -127,8 +144,8 @@ export default function ConciliacaoPage() {
         <>
           {/* Status de conciliação */}
           {saldoInput !== '' && (() => {
-            const saldoBanco = parseFloat(saldoInput.replace(/\./g, '').replace(',', '.'))
-            if (isNaN(saldoBanco)) return null
+            const saldoBanco = parseSaldo(saldoInput)
+            if (saldoBanco === null) return null
             const saldoSistema = data.saldoPeriodo
             const diferenca = saldoBanco - saldoSistema
             const conciliado = Math.abs(diferenca) < 0.02

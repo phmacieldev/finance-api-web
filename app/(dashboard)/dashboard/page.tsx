@@ -36,10 +36,15 @@ export default function DashboardPage() {
     queryFn: () => api.get<Previsao[]>('/previsoes').then(r => r.data),
     select: (list) => {
       const hoje = new Date()
-      const dia = hoje.getDate()
+      const diasAlvo = new Set<number>()
+      for (let i = 0; i <= 7; i++) {
+        const d = new Date(hoje)
+        d.setDate(hoje.getDate() + i)
+        diasAlvo.add(d.getDate())
+      }
       return list
         .filter(p => p.ativa && p.diaRecorrencia != null)
-        .filter(p => (p.diaRecorrencia ?? 0) >= dia && (p.diaRecorrencia ?? 0) <= dia + 7)
+        .filter(p => diasAlvo.has(p.diaRecorrencia ?? 0))
         .sort((a, b) => (a.diaRecorrencia ?? 0) - (b.diaRecorrencia ?? 0))
         .slice(0, 5)
     },

@@ -7,7 +7,6 @@ export interface ApiError {
 
 export interface TokenResponseDTO {
   token: string | null
-  type: string | null
   refreshToken: string | null
   email: string
   role: string
